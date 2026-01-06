@@ -9,6 +9,7 @@ import {
   getDataSources,
   getChatbotStatus,
   deleteDataSource,
+  getDataSourceChunks,
 } from '../controllers/chatbotController';
 import { authenticateToken } from '../middleware/auth';
 import {
@@ -32,6 +33,7 @@ router.delete('/:id', deleteChatbot);
 router.post('/:id/sources/url', addUrlSourceValidation, addUrlSource);
 router.post('/:id/sources/text', addTextSourceValidation, addTextSource);
 router.get('/:id/sources', getDataSources);
+router.get('/:chatbotId/sources/:sourceId/chunks', getDataSourceChunks);
 router.delete('/:id/sources/:sourceId', deleteDataSource);
 
 // Status

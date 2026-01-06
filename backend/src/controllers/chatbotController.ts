@@ -124,3 +124,24 @@ export const deleteDataSource = asyncHandler(async (req: AuthRequest, res: Respo
     message: 'Data source deleted successfully',
   });
 });
+
+/**
+ * Get chunks for a data source
+ */
+export const getDataSourceChunks = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { chatbotId, sourceId } = req.params;
+  const userId = req.userId!;
+
+  // Verify ownership
+  const chatbot = await chatbotService.getChatbot(chatbotId, userId);
+
+  if (!chatbot) {
+    res.status(404).json({ error: 'Chatbot not found' });
+    return;
+  }
+
+  // Fetch chunks
+  const chunks = await chatbotService.getDataSourceChunks(sourceId);
+
+  res.status(200).json({ chunks });
+});

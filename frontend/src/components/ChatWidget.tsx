@@ -26,6 +26,11 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ chatbotId, chatbotName }) => {
     scrollToBottom();
   }, [messages]);
 
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    // Could add a toast notification here
+  };
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputMessage.trim() || isLoading) return;
@@ -69,6 +74,24 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ chatbotId, chatbotName }) => {
           <div key={index} className={`chat-message ${message.role}`}>
             <div className="chat-message-content">
               {message.content}
+              {message.role === 'assistant' && (
+                <button
+                  onClick={() => copyToClipboard(message.content)}
+                  style={{
+                    marginLeft: '10px',
+                    padding: '4px 8px',
+                    fontSize: '12px',
+                    border: 'none',
+                    background: '#f0f0f0',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    opacity: 0.7,
+                  }}
+                  title="Copy response"
+                >
+                  📋 Copy
+                </button>
+              )}
               {message.sources && message.sources.length > 0 && (
                 <div style={{ marginTop: '10px', fontSize: '12px', opacity: 0.8 }}>
                   <strong>Sources:</strong>

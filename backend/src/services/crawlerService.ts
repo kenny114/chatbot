@@ -29,6 +29,8 @@ export class CrawlerService {
    */
   async crawlWebsite(url: string, maxPages: number = 50): Promise<CrawlResult[]> {
     try {
+      console.log(`Starting crawl for ${url} with max ${maxPages} pages`);
+
       // Using Apify's Website Content Crawler
       const run = await client.actor('apify/website-content-crawler').call({
         startUrls: [{ url }],
@@ -39,6 +41,15 @@ export class CrawlerService {
         // Extract text content
         removeElementsCssSelector: 'nav, footer, header, script, style, iframe, .ads, .advertisement',
       });
+
+      console.log(`Crawl completed with status: ${run.status}`);
+
+      // Check if run was successful
+      if (run.status !== 'SUCCEEDED') {
+        const errorMsg = run.statusMessage || `Crawl failed with status: ${run.status}`;
+        console.error(`Crawl failed: ${errorMsg}`);
+        throw new Error(errorMsg);
+      }
 
       // Fetch results from the dataset
       const { items } = await client.dataset(run.defaultDatasetId).listItems();

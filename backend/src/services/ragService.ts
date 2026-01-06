@@ -25,8 +25,53 @@ export class RAGService {
       // Generate embedding for the query
       const queryEmbedding = await embeddingService.generateEmbedding(query);
 
-      // Retrieve chunks from database
-      // Note: This is a simplified version. In production, use pgvector for efficient similarity search
+      // Check if pgvector is available (embedding_vector column exists)
+      const { data: chunks, error } = await supabaseAdmin.rpc('match_chunks_pgvector', {
+        query_embedding: queryEmbedding,
+        match_chatbot_id: chatbotId,
+        match_count: topK,
+      });
+
+      // Fallback to old method if pgvector RPC doesn't exist
+      if (error && error.message.includes('match_chunks_pgvector')) {
+        return this.retrieveContextLegacy(chatbotId, queryEmbedding, topK);
+      }
+
+      if (error) {
+        throw new Error(`Database error: ${error.message}`);
+      }
+
+      if (!chunks || chunks.length === 0) {
+        return [];
+      }
+
+      // Format results
+      const topChunks = chunks.map((chunk: any) => ({
+        content: chunk.content,
+        source_url: chunk.metadata?.source_url,
+        similarity: 1 - chunk.distance, // Convert distance to similarity
+      }));
+
+      // Always return at least top 3, filter out very low similarity
+      return topChunks.filter((chunk: RetrievedContext, idx: number) => idx < 3 || chunk.similarity > 0.2);
+    } catch (error) {
+      console.error('Context retrieval error:', error);
+      // Fallback to legacy method
+      const queryEmbedding = await embeddingService.generateEmbedding(query);
+      return this.retrieveContextLegacy(chatbotId, queryEmbedding, topK);
+    }
+  }
+
+  /**
+   * Legacy context retrieval (without pgvector)
+   * Used as fallback if pgvector is not available
+   */
+  private async retrieveContextLegacy(
+    chatbotId: string,
+    queryEmbedding: number[],
+    topK: number
+  ): Promise<RetrievedContext[]> {
+    try {
       const { data: chunks, error } = await supabaseAdmin
         .from('content_chunks')
         .select('content, metadata, embedding')
@@ -42,7 +87,6 @@ export class RAGService {
 
       // Calculate similarity scores
       const chunksWithScores = chunks.map(chunk => {
-        // Convert embedding from string to array if needed
         let chunkEmbedding = chunk.embedding;
         if (typeof chunkEmbedding === 'string') {
           chunkEmbedding = JSON.parse(chunkEmbedding);
@@ -61,15 +105,17 @@ export class RAGService {
       });
 
       // Sort by similarity and take top K
-      const topChunks = chunksWithScores
-        .sort((a, b) => b.similarity - a.similarity)
+      const sortedChunks = chunksWithScores.sort((a, b) => b.similarity - a.similarity);
+
+      // Always return at least the top 3 chunks
+      const topChunks = sortedChunks
         .slice(0, topK)
-        .filter(chunk => chunk.similarity > 0.2); // Only keep relevant chunks (lowered from 0.5)
+        .filter((chunk, idx) => idx < 3 || chunk.similarity > 0.2);
 
       return topChunks;
     } catch (error) {
-      console.error('Context retrieval error:', error);
-      throw new Error('Failed to retrieve context');
+      console.error('Legacy context retrieval error:', error);
+      return [];
     }
   }
 

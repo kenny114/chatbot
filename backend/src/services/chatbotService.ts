@@ -390,6 +390,28 @@ export class ChatbotService {
       throw new AppError('Failed to fetch data sources', 500);
     }
   }
+
+  /**
+   * Gets content chunks for a data source
+   */
+  async getDataSourceChunks(dataSourceId: string): Promise<any[]> {
+    try {
+      const { data: chunks, error } = await supabaseAdmin
+        .from('content_chunks')
+        .select('id, content, metadata, created_at')
+        .eq('data_source_id', dataSourceId)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        throw new AppError('Failed to fetch chunks', 500);
+      }
+
+      return chunks || [];
+    } catch (error) {
+      console.error('Fetch chunks error:', error);
+      throw new AppError('Failed to fetch chunks', 500);
+    }
+  }
 }
 
 export const chatbotService = new ChatbotService();
