@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir:*)",
+      "Bash(npm install)",
+      "Bash(npm run dev:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)",
+      "Bash(powershell -Command \"Stop-Process -Id 39060 -Force\")",
+      "Bash(curl:*)",
+      "Bash(powershell -Command \"Get-Process node | Stop-Process -Force\")",
+      "Bash(npx ts-node:*)",
+      "Bash(npm run dev:check-db:*)",
+      "Bash(timeout /t 30)",
+      "Bash(tasklist:*)",
+      "Bash(powershell -Command:*)",
+      "Bash(timeout /t 5)",
+      "Bash(git remote add:*)"
+    ]
+  }
+}
