@@ -2,6 +2,12 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authAPI } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert } from '@/components/ui/alert';
+import { Loader2, Check } from 'lucide-react';
 
 const Register: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -12,9 +18,24 @@ const Register: React.FC = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
 
+  const passwordRequirements = {
+    minLength: password.length >= 8,
+    hasUppercase: /[A-Z]/.test(password),
+    hasLowercase: /[a-z]/.test(password),
+    hasNumber: /[0-9]/.test(password),
+  };
+
+  const isPasswordValid = Object.values(passwordRequirements).every(Boolean);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (!isPasswordValid) {
+      setError('Password does not meet all requirements');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -29,55 +50,123 @@ const Register: React.FC = () => {
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-box">
-        <h2>Create Your Account</h2>
-        {error && <div className="error">{error}</div>}
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="companyName">Company Name</label>
-            <input
-              type="text"
-              id="companyName"
-              value={companyName}
-              onChange={(e) => setCompanyName(e.target.value)}
-              required
-              placeholder="Your Company Inc."
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="email">Email</label>
-            <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              placeholder="you@company.com"
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              placeholder="••••••••"
-              minLength={8}
-            />
-            <small style={{ color: '#666', fontSize: '12px' }}>
-              Must be at least 8 characters with uppercase, lowercase, and number
-            </small>
-          </div>
-          <button type="submit" className="btn" disabled={isLoading}>
-            {isLoading ? 'Creating account...' : 'Register'}
-          </button>
-        </form>
-        <div className="auth-link">
-          Already have an account? <Link to="/login">Login</Link>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 px-4 py-8">
+      <div className="w-full max-w-md">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <Link to="/" className="inline-flex items-center space-x-2 mb-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary-dark rounded-xl flex items-center justify-center">
+              <span className="text-white font-bold text-xl">C</span>
+            </div>
+            <span className="text-2xl font-bold text-gray-900">ChatBot AI</span>
+          </Link>
         </div>
+
+        <Card className="shadow-xl">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl text-center">Create your account</CardTitle>
+            <CardDescription className="text-center">
+              Start building AI chatbots for your business
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {error && (
+              <Alert variant="destructive" className="mb-4">
+                {error}
+              </Alert>
+            )}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="companyName">Company Name</Label>
+                <Input
+                  type="text"
+                  id="companyName"
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  required
+                  placeholder="Acme Inc."
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Work Email</Label>
+                <Input
+                  type="email"
+                  id="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  placeholder="you@company.com"
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  type="password"
+                  id="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  placeholder="••••••••"
+                  minLength={8}
+                  disabled={isLoading}
+                />
+                {password && (
+                  <div className="text-xs space-y-1 mt-2">
+                    <div className={`flex items-center gap-2 ${passwordRequirements.minLength ? 'text-green-600' : 'text-gray-500'}`}>
+                      <Check className={`w-3 h-3 ${passwordRequirements.minLength ? 'opacity-100' : 'opacity-30'}`} />
+                      <span>At least 8 characters</span>
+                    </div>
+                    <div className={`flex items-center gap-2 ${passwordRequirements.hasUppercase ? 'text-green-600' : 'text-gray-500'}`}>
+                      <Check className={`w-3 h-3 ${passwordRequirements.hasUppercase ? 'opacity-100' : 'opacity-30'}`} />
+                      <span>One uppercase letter</span>
+                    </div>
+                    <div className={`flex items-center gap-2 ${passwordRequirements.hasLowercase ? 'text-green-600' : 'text-gray-500'}`}>
+                      <Check className={`w-3 h-3 ${passwordRequirements.hasLowercase ? 'opacity-100' : 'opacity-30'}`} />
+                      <span>One lowercase letter</span>
+                    </div>
+                    <div className={`flex items-center gap-2 ${passwordRequirements.hasNumber ? 'text-green-600' : 'text-gray-500'}`}>
+                      <Check className={`w-3 h-3 ${passwordRequirements.hasNumber ? 'opacity-100' : 'opacity-30'}`} />
+                      <span>One number</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <Button
+                type="submit"
+                className="w-full bg-gradient-to-r from-primary to-primary-dark hover:opacity-90"
+                disabled={isLoading || (password.length > 0 && !isPasswordValid)}
+                size="lg"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating account...
+                  </>
+                ) : (
+                  'Create account'
+                )}
+              </Button>
+            </form>
+          </CardContent>
+          <CardFooter className="flex flex-col space-y-4">
+            <div className="text-sm text-gray-600 text-center">
+              Already have an account?{' '}
+              <Link to="/login" className="text-primary font-semibold hover:underline">
+                Sign in
+              </Link>
+            </div>
+            <div className="text-sm text-gray-600 text-center">
+              <Link to="/" className="text-primary hover:underline">
+                ← Back to home
+              </Link>
+            </div>
+            <div className="text-xs text-gray-500 text-center">
+              By creating an account, you agree to our Terms of Service and Privacy Policy
+            </div>
+          </CardFooter>
+        </Card>
       </div>
     </div>
   );

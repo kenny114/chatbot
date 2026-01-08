@@ -2,11 +2,11 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
 import Header from './components/Header';
+import Landing from './pages/Landing/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import ChatbotDetail from './pages/ChatbotDetail';
-import './styles/App.css';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -25,6 +25,7 @@ const App: React.FC = () => {
     <BrowserRouter>
       {isAuthenticated && <Header />}
       <Routes>
+        <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route
@@ -43,7 +44,6 @@ const App: React.FC = () => {
             </ProtectedRoute>
           }
         />
-        <Route path="/" element={<Navigate to="/dashboard" />} />
       </Routes>
     </BrowserRouter>
   );

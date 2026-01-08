@@ -18,7 +18,13 @@
       "Bash(timeout /t 5)",
       "Bash(git remote add:*)",
       "Bash(git commit:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(npm install:*)",
+      "Bash(cat:*)",
+      "Bash(tree:*)",
+      "Bash(npx tailwindcss init -p)",
+      "Bash(node_modules/.bin/tailwindcss:*)",
+      "Bash(npm uninstall:*)"
     ]
   }
 }
