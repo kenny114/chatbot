@@ -17,7 +17,10 @@ export class ChatbotService {
   ): Promise<Chatbot> {
     try {
       const chatbotId = uuidv4();
-      const webhookUrl = `${process.env.FRONTEND_URL || 'http://localhost:3001'}/api/webhooks/${chatbotId}/query`;
+      const backendUrl = process.env.BACKEND_URL
+        || (process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : null)
+        || 'http://localhost:3001';
+      const webhookUrl = `${backendUrl}/api/webhooks/${chatbotId}/query`;
 
       const { data: chatbot, error } = await supabaseAdmin
         .from('chatbots')

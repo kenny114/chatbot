@@ -129,8 +129,9 @@ const ChatbotDetail: React.FC = () => {
 
   const handleViewContent = async (sourceId: string) => {
     try {
+      const apiUrl = import.meta.env.VITE_API_URL || '/api';
       const response = await fetch(
-        `http://localhost:3001/api/chatbots/${id}/sources/${sourceId}/chunks`,
+        `${apiUrl}/chatbots/${id}/sources/${sourceId}/chunks`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -155,7 +156,8 @@ const ChatbotDetail: React.FC = () => {
   };
 
   const generateEmbedCode = () => {
-    return `<script src="http://localhost:5173/widget.js" data-chatbot-id="${id}"></script>`;
+    const frontendUrl = typeof window !== 'undefined' ? window.location.origin : 'https://chatbotfrontend-gamma.vercel.app';
+    return `<script src="${frontendUrl}/widget.js" data-chatbot-id="${id}"></script>`;
   };
 
   const getStatusBadge = (status: string) => {
