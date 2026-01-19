@@ -34,7 +34,9 @@ const Login: React.FC = () => {
       await login(response.token);
       // Navigation will be handled by the useEffect when isAuthenticated becomes true
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Login failed. Please try again.');
+      const errorData = err.response?.data?.error;
+      const errorMessage = typeof errorData === 'object' ? errorData.message : errorData;
+      setError(errorMessage || 'Login failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
