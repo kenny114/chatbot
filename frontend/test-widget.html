@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot Widget Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 40px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #333;
+        }
+        .info-box {
+            background-color: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        code {
+            background-color: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>Chatbot Widget Test Page</h1>
+
+    <div class="info-box">
+        <h2>Instructions:</h2>
+        <p>This page demonstrates how to embed the chatbot widget on your website.</p>
+        <p>The chatbot widget should appear in the bottom-right corner of the page.</p>
+        <p><strong>Replace <code>YOUR_CHATBOT_ID</code> with your actual chatbot ID from the dashboard.</strong></p>
+    </div>
+
+    <div class="info-box">
+        <h2>Embedding Code:</h2>
+        <pre><code>&lt;script src="https://chatbotfrontend-gamma.vercel.app/widget.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+  const widget = new ChatbotWidget({
+    chatbotId: 'YOUR_CHATBOT_ID',
+    position: 'bottom-right', // or 'bottom-left'
+    primaryColor: '#3b82f6' // optional: customize color
+  });
+  widget.init();
+&lt;/script&gt;</code></pre>
+    </div>
+
+    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+
+    <!-- Load the widget script -->
+    <script src="dist/widget.js"></script>
+    <script>
+        // Initialize the chatbot widget
+        // IMPORTANT: Replace 'YOUR_CHATBOT_ID' with your actual chatbot ID
+        const widget = new ChatbotWidget({
+            chatbotId: 'YOUR_CHATBOT_ID', // Replace this!
+            position: 'bottom-right',
+            primaryColor: '#3b82f6'
+        });
+        widget.init();
+    </script>
+</body>
+</html>
