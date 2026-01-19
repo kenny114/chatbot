@@ -1,20 +1,38 @@
 import React, { useState } from 'react';
 import { chatbotAPI } from '../services/api';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from './ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Textarea } from './ui/textarea';
+import { AlertCircle, Globe, FileText, Type } from 'lucide-react';
+import FileUploadZone from './FileUploadZone';
 
 interface AddDataSourceModalProps {
+  open: boolean;
   chatbotId: string;
   onClose: () => void;
   onSuccess: () => void;
 }
 
 const AddDataSourceModal: React.FC<AddDataSourceModalProps> = ({
+  open,
   chatbotId,
   onClose,
   onSuccess,
 }) => {
-  const [sourceType, setSourceType] = useState<'url' | 'text'>('url');
+  const [activeTab, setActiveTab] = useState<'url' | 'text' | 'file'>('url');
   const [url, setUrl] = useState('');
   const [text, setText] = useState('');
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -24,11 +42,22 @@ const AddDataSourceModal: React.FC<AddDataSourceModalProps> = ({
     setIsLoading(true);
 
     try {
-      if (sourceType === 'url') {
+      if (activeTab === 'url') {
         await chatbotAPI.addUrlSource(chatbotId, url);
-      } else {
+      } else if (activeTab === 'text') {
         await chatbotAPI.addTextSource(chatbotId, text);
+      } else if (activeTab === 'file') {
+        // TODO: Implement file upload API
+        // For now, show a placeholder message
+        setError('File upload feature is coming soon. Backend API needs to be implemented.');
+        setIsLoading(false);
+        return;
       }
+
+      // Clear form and close
+      setUrl('');
+      setText('');
+      setSelectedFiles([]);
       onSuccess();
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to add data source');
@@ -37,76 +66,134 @@ const AddDataSourceModal: React.FC<AddDataSourceModalProps> = ({
     }
   };
 
-  return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <h3>Add Data Source</h3>
-        {error && <div className="error">{error}</div>}
+  const handleClose = () => {
+    if (!isLoading) {
+      setUrl('');
+      setText('');
+      setSelectedFiles([]);
+      setError('');
+      setActiveTab('url');
+      onClose();
+    }
+  };
 
-        <div className="form-group">
-          <label>Source Type</label>
-          <div style={{ display: 'flex', gap: '10px', marginTop: '5px' }}>
-            <button
-              type="button"
-              className={`btn ${sourceType === 'url' ? '' : 'btn-secondary'}`}
-              onClick={() => setSourceType('url')}
-            >
-              Website URL
-            </button>
-            <button
-              type="button"
-              className={`btn ${sourceType === 'text' ? '' : 'btn-secondary'}`}
-              onClick={() => setSourceType('text')}
-            >
-              Manual Text
-            </button>
-          </div>
-        </div>
+  const isFormValid = () => {
+    if (activeTab === 'url') return url.trim().length > 0;
+    if (activeTab === 'text') return text.trim().length >= 10;
+    if (activeTab === 'file') return selectedFiles.length > 0;
+    return false;
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-[600px]">
+        <DialogHeader>
+          <DialogTitle>Add Data Source</DialogTitle>
+          <DialogDescription>
+            Add content to train your chatbot. Choose from a website URL, manual text input, or file upload.
+          </DialogDescription>
+        </DialogHeader>
 
         <form onSubmit={handleSubmit}>
-          {sourceType === 'url' ? (
-            <div className="form-group">
-              <label htmlFor="url">Website URL *</label>
-              <input
-                type="url"
-                id="url"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                required
-                placeholder="https://example.com"
-              />
-              <small style={{ color: '#666', fontSize: '12px' }}>
-                The crawler will extract content from this URL and related pages
-              </small>
-            </div>
-          ) : (
-            <div className="form-group">
-              <label htmlFor="text">Text Content *</label>
-              <textarea
-                id="text"
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                required
-                placeholder="Enter company information, FAQs, product details..."
-                rows={10}
-              />
-              <small style={{ color: '#666', fontSize: '12px' }}>
-                Minimum 10 characters, maximum 100,000 characters
-              </small>
-            </div>
-          )}
+          <div className="py-4">
+            {error && (
+              <div className="flex items-start gap-2 p-3 mb-4 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-md">
+                <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
 
-          <div className="modal-actions">
-            <button type="button" className="btn btn-secondary" onClick={onClose}>
-              Cancel
-            </button>
-            <button type="submit" className="btn" disabled={isLoading}>
-              {isLoading ? 'Adding...' : 'Add Source'}
-            </button>
+            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="url" className="flex items-center gap-2">
+                  <Globe className="h-4 w-4" />
+                  <span className="hidden sm:inline">Website</span>
+                </TabsTrigger>
+                <TabsTrigger value="text" className="flex items-center gap-2">
+                  <Type className="h-4 w-4" />
+                  <span className="hidden sm:inline">Text</span>
+                </TabsTrigger>
+                <TabsTrigger value="file" className="flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  <span className="hidden sm:inline">File</span>
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="url" className="space-y-4 mt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="url">
+                    Website URL <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="url"
+                    type="url"
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                    placeholder="https://example.com"
+                    disabled={isLoading}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    The crawler will extract content from this URL and related pages
+                  </p>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="text" className="space-y-4 mt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="text">
+                    Text Content <span className="text-red-500">*</span>
+                  </Label>
+                  <Textarea
+                    id="text"
+                    value={text}
+                    onChange={(e) => setText(e.target.value)}
+                    placeholder="Enter company information, FAQs, product details..."
+                    rows={10}
+                    disabled={isLoading}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Minimum 10 characters, maximum 100,000 characters
+                  </p>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="file" className="space-y-4 mt-4">
+                <div className="space-y-2">
+                  <Label>
+                    Upload Files <span className="text-red-500">*</span>
+                  </Label>
+                  <FileUploadZone
+                    onFilesSelected={setSelectedFiles}
+                    maxFiles={5}
+                    maxSizeMB={10}
+                    acceptedFileTypes={['.pdf', '.docx', '.txt', '.csv']}
+                    multiple={true}
+                    disabled={isLoading}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Supported formats: PDF, DOCX, TXT, CSV (Max 10MB per file)
+                  </p>
+                </div>
+              </TabsContent>
+            </Tabs>
           </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleClose}
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isLoading || !isFormValid()}>
+              {isLoading ? 'Adding...' : 'Add Source'}
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 

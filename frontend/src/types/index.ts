@@ -33,3 +33,26 @@ export interface ChatMessage {
   content: string;
   sources?: string[];
 }
+
+export interface PaymentPlan {
+  id: string;
+  name: string;
+  price: number;
+  currency: string;
+  description: string;
+  shortDescription: string;
+  features: string[];
+  excludedFeatures?: string[];
+  message_limit: number;
+  chatbot_limit: number;
+  preview_messages: number;
+  live_embed: boolean;
+  lead_capture: boolean;
+  branding_removal: boolean;
+  analytics_access: 'none' | 'preview' | 'full';
+  business_hours: boolean;
+  paypal_plan_id?: string;
+  cta_text: string;
+  cta_action: 'upgrade' | 'subscribe' | 'contact';
+  highlighted?: boolean;
+}

@@ -1,185 +1,176 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Check } from 'lucide-react';
+import { Check, X, Sparkles } from 'lucide-react';
 
 interface PricingTier {
+  id: string;
   name: string;
-  price: string;
-  period: string;
   description: string;
+  price: string;
+  priceNote?: string;
   features: string[];
+  excludedFeatures?: string[];
   cta: string;
   ctaLink: string;
-  popular?: boolean;
-  variant?: 'default' | 'pro' | 'enterprise';
+  highlighted?: boolean;
 }
 
 const pricingTiers: PricingTier[] = [
   {
+    id: 'free',
     name: 'Free',
+    description: 'Build Only',
     price: '$0',
-    period: 'forever',
-    description: 'Perfect for testing and personal projects',
+    priceNote: 'forever',
     features: [
-      '1 chatbot',
-      '100 messages per month',
-      'Website URL training',
-      'Manual text training',
-      'Community support',
-      'Basic analytics',
+      'Website scraping',
+      'Upload documents & FAQs',
+      'Visual customization',
+      'Industry & tone selection',
     ],
-    cta: 'Start for Free',
+    excludedFeatures: [
+      'Test chat preview',
+      'Live website embed',
+      'Lead capture',
+      'Analytics',
+    ],
+    cta: 'Get Started Free',
     ctaLink: '/register',
-    variant: 'default',
   },
   {
+    id: 'pro',
     name: 'Pro',
-    price: '$29',
-    period: 'per month',
-    description: 'For growing businesses and startups',
+    description: 'Go Live & Capture Leads',
+    price: '$19.99',
+    priceNote: '/month',
     features: [
-      '5 chatbots',
-      '1,000 messages per month',
-      'All Free features',
-      'Custom branding',
-      'Email support',
-      'Advanced analytics',
-      'API access',
-      'Priority processing',
+      'Everything in Free',
+      'Live website embed',
+      'Unlimited conversations',
+      'Branding removal',
+      'Business hours behavior',
+      'Full analytics',
+      'Lead capture & qualification',
+      'Instant notifications',
     ],
-    cta: 'Upgrade to Pro',
+    cta: 'Get Pro',
     ctaLink: '/register',
-    popular: true,
-    variant: 'pro',
+    highlighted: true,
   },
   {
-    name: 'Enterprise',
-    price: '$99',
-    period: 'per month',
-    description: 'For large organizations with high volume',
+    id: 'custom',
+    name: 'Custom',
+    description: 'Tailored Solutions',
+    price: 'Custom',
     features: [
-      'Unlimited chatbots',
-      'Unlimited messages',
-      'All Pro features',
-      'Dedicated account manager',
-      'Priority support',
-      'Custom integrations',
-      'SLA guarantee',
-      'Advanced security',
+      'Everything in Pro',
+      'CRM integrations',
+      'Multi-channel bots',
+      'White-label solution',
+      'Custom workflows',
+      'Dedicated support',
     ],
     cta: 'Contact Sales',
-    ctaLink: '#demo',
-    variant: 'enterprise',
+    ctaLink: 'mailto:sales@yourcompany.com?subject=Custom Plan Inquiry',
   },
 ];
 
 const Pricing: React.FC = () => {
   return (
-    <section id="pricing" className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
-      <div className="max-w-7xl mx-auto">
+    <section id="pricing" className="py-24 px-4 bg-slate-50 dark:bg-slate-900/50">
+      <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-16">
-          <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">
             Simple, Transparent Pricing
           </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Choose the perfect plan for your needs. All plans include a 14-day free trial.
+          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+            Build for free, pay when you're ready to go live and capture leads.
           </p>
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <div className="grid md:grid-cols-3 gap-8">
           {pricingTiers.map((tier) => (
             <Card
-              key={tier.name}
-              className={`relative flex flex-col ${
-                tier.popular
-                  ? 'border-2 border-primary shadow-xl scale-105'
-                  : 'border border-gray-200'
+              key={tier.id}
+              className={`relative transition-all duration-300 ${
+                tier.highlighted
+                  ? 'border-2 border-primary shadow-xl scale-105 bg-gradient-to-b from-primary/5 to-transparent'
+                  : 'border hover:border-primary/50 hover:shadow-lg'
               }`}
             >
-              {tier.popular && (
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                  <Badge className="bg-gradient-to-r from-primary to-primary-dark text-white px-4 py-1">
+              {/* Popular Badge */}
+              {tier.highlighted && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <span className="bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1">
+                    <Sparkles className="w-3 h-3" />
                     Most Popular
-                  </Badge>
+                  </span>
                 </div>
               )}
 
-              <CardHeader>
-                <CardTitle className="text-2xl">{tier.name}</CardTitle>
-                <CardDescription className="text-gray-500">
-                  {tier.description}
-                </CardDescription>
+              <CardHeader className="text-center pb-4">
+                <CardTitle className="text-xl font-bold">{tier.name}</CardTitle>
+                <p className="text-sm text-muted-foreground">{tier.description}</p>
                 <div className="mt-4">
-                  <span className="text-5xl font-bold text-gray-900">
-                    {tier.price}
-                  </span>
-                  <span className="text-gray-500 ml-2">/{tier.period}</span>
+                  <span className="text-4xl font-bold">{tier.price}</span>
+                  {tier.priceNote && (
+                    <span className="text-muted-foreground ml-1">{tier.priceNote}</span>
+                  )}
                 </div>
               </CardHeader>
 
-              <CardContent className="flex-1">
+              <CardContent className="space-y-6">
+                {/* Features */}
                 <ul className="space-y-3">
                   {tier.features.map((feature, index) => (
-                    <li key={index} className="flex items-start">
-                      <Check className="w-5 h-5 text-accent mr-3 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-600">{feature}</span>
+                    <li key={index} className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
+                      <span className="text-sm">{feature}</span>
+                    </li>
+                  ))}
+                  {tier.excludedFeatures?.map((feature, index) => (
+                    <li key={`ex-${index}`} className="flex items-start gap-2 opacity-50">
+                      <X className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                      <span className="text-sm text-muted-foreground line-through">{feature}</span>
                     </li>
                   ))}
                 </ul>
-              </CardContent>
 
-              <CardFooter>
-                {tier.ctaLink.startsWith('#') ? (
-                  <a href={tier.ctaLink} className="w-full">
-                    <Button
-                      className={`w-full ${
-                        tier.popular
-                          ? 'bg-gradient-to-r from-primary to-primary-dark hover:opacity-90'
-                          : ''
-                      }`}
-                      variant={tier.popular ? 'default' : 'outline'}
-                      size="lg"
-                    >
-                      {tier.cta}
-                    </Button>
-                  </a>
-                ) : (
-                  <Link to={tier.ctaLink} className="w-full">
-                    <Button
-                      className={`w-full ${
-                        tier.popular
-                          ? 'bg-gradient-to-r from-primary to-primary-dark hover:opacity-90'
-                          : ''
-                      }`}
-                      variant={tier.popular ? 'default' : 'outline'}
-                      size="lg"
-                    >
-                      {tier.cta}
-                    </Button>
-                  </Link>
-                )}
-              </CardFooter>
+                {/* CTA Button */}
+                <Button
+                  variant={tier.highlighted ? 'default' : 'outline'}
+                  className={`w-full ${
+                    tier.highlighted
+                      ? ''
+                      : 'border-foreground/20 hover:bg-foreground hover:text-background'
+                  }`}
+                  asChild
+                >
+                  {tier.ctaLink.startsWith('mailto:') ? (
+                    <a href={tier.ctaLink}>{tier.cta}</a>
+                  ) : (
+                    <Link to={tier.ctaLink}>{tier.cta}</Link>
+                  )}
+                </Button>
+              </CardContent>
             </Card>
           ))}
         </div>
 
-        {/* FAQ Link */}
-        <div className="text-center mt-12">
-          <p className="text-gray-600">
-            Questions about pricing?{' '}
-            <a href="#faq" className="text-primary font-medium hover:underline">
-              Check our FAQ
-            </a>{' '}
-            or{' '}
-            <a href="#demo" className="text-primary font-medium hover:underline">
-              contact us
-            </a>
-          </p>
+        {/* Upgrade Message */}
+        <div className="mt-16 text-center">
+          <div className="inline-block bg-primary/10 border border-primary/20 rounded-xl px-8 py-6">
+            <p className="text-lg font-medium mb-2">
+              Start building today for free
+            </p>
+            <p className="text-muted-foreground text-sm">
+              Your assistant will be ready. Upgrade when you want to go live.
+            </p>
+          </div>
         </div>
       </div>
     </section>

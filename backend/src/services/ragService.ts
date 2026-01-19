@@ -124,12 +124,18 @@ export class RAGService {
    * @param chatbotId - The chatbot ID
    * @param userMessage - The user's message
    * @param chatbotInstructions - Custom instructions for the chatbot
+   * @param behaviorSettings - Behavior settings (tone, length, language)
    * @returns Generated response and sources
    */
   async generateResponse(
     chatbotId: string,
     userMessage: string,
-    chatbotInstructions: string = ''
+    chatbotInstructions: string = '',
+    behaviorSettings?: {
+      tone?: string;
+      length?: string;
+      language?: string;
+    }
   ): Promise<{ response: string; sources: string[] }> {
     try {
       // Retrieve relevant context
@@ -147,6 +153,30 @@ export class RAGService {
         .map((ctx, idx) => `[${idx + 1}] ${ctx.content}`)
         .join('\n\n');
 
+      // Build tone instruction
+      const toneMap: Record<string, string> = {
+        professional: 'Maintain a professional and business-like tone',
+        friendly: 'Be warm, friendly, and conversational',
+        casual: 'Use a casual and relaxed tone, as if talking to a friend',
+      };
+      const toneInstruction = behaviorSettings?.tone
+        ? toneMap[behaviorSettings.tone] || toneMap.professional
+        : toneMap.professional;
+
+      // Build length instruction
+      const lengthMap: Record<string, { instruction: string; maxTokens: number }> = {
+        concise: { instruction: 'Keep responses short and to the point (2-3 sentences max)', maxTokens: 300 },
+        detailed: { instruction: 'Provide comprehensive and detailed responses', maxTokens: 800 },
+      };
+      const lengthSettings = behaviorSettings?.length
+        ? lengthMap[behaviorSettings.length] || lengthMap.concise
+        : lengthMap.concise;
+
+      // Build language instruction
+      const languageInstruction = behaviorSettings?.language && behaviorSettings.language !== 'English'
+        ? `\n6. Respond in ${behaviorSettings.language}`
+        : '';
+
       // Build system prompt
       const systemPrompt = `You are a helpful AI assistant for a company. Your role is to answer questions based on the company's information provided below.
 
@@ -154,9 +184,9 @@ ${chatbotInstructions ? `Additional Instructions: ${chatbotInstructions}\n` : ''
 IMPORTANT RULES:
 1. Only answer based on the context provided below
 2. If the context doesn't contain the answer, say you don't have that information
-3. Be concise and helpful
+3. ${lengthSettings.instruction}
 4. Cite sources by referencing the [number] when relevant
-5. Maintain a professional and friendly tone
+5. ${toneInstruction}${languageInstruction}
 
 CONTEXT:
 ${contextString}`;
@@ -169,7 +199,7 @@ ${contextString}`;
           { role: 'user', content: userMessage },
         ],
         temperature: 0.7,
-        max_tokens: 500,
+        max_tokens: lengthSettings.maxTokens,
       });
 
       const response = completion.choices[0].message.content || 'I apologize, but I encountered an error generating a response.';

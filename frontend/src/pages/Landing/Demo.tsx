@@ -21,14 +21,14 @@ const Demo: React.FC = () => {
   };
 
   return (
-    <section id="demo" className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-gray-50 to-white">
+    <section id="demo" className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-muted/20 to-background">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-16">
-          <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4">
+          <h2 className="text-4xl sm:text-5xl font-bold text-foreground mb-4">
             See It In Action
           </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Watch how our AI chatbot instantly answers customer questions with your company data
           </p>
         </div>
@@ -37,21 +37,21 @@ const Demo: React.FC = () => {
           {/* Demo Chatbot Preview */}
           <div>
             <Card className="shadow-2xl">
-              <CardHeader className="bg-gradient-to-r from-primary to-primary-dark text-white">
+              <CardHeader className="bg-gradient-to-r from-primary to-primary text-primary-foreground">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
+                    <div className="w-10 h-10 bg-background rounded-full flex items-center justify-center">
                       <Bot className="w-6 h-6 text-primary" />
                     </div>
                     <div>
                       <h3 className="font-semibold">Demo Assistant</h3>
                       <div className="flex items-center space-x-2">
-                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                        <span className="text-sm text-white/80">Online</span>
+                        <div className="w-2 h-2 bg-accent rounded-full"></div>
+                        <span className="text-sm text-primary-foreground/80">Online</span>
                       </div>
                     </div>
                   </div>
-                  <Badge variant="secondary" className="bg-white/20 text-white border-0">
+                  <Badge variant="secondary" className="bg-primary-foreground/20 text-primary-foreground border-0">
                     Live Demo
                   </Badge>
                 </div>
@@ -59,14 +59,14 @@ const Demo: React.FC = () => {
 
               <CardContent className="p-0">
                 {/* Chat Messages */}
-                <div className="h-96 overflow-y-auto p-6 space-y-4 bg-gray-50">
+                <div className="h-96 overflow-y-auto p-6 space-y-4 bg-muted/30">
                   {/* Bot Message */}
                   <div className="flex items-start space-x-3">
                     <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
-                      <Bot className="w-5 h-5 text-white" />
+                      <Bot className="w-5 h-5 text-primary-foreground" />
                     </div>
-                    <div className="bg-white rounded-lg p-3 shadow-sm max-w-xs">
-                      <p className="text-sm text-gray-800">
+                    <div className="bg-card rounded-lg p-3 shadow-sm max-w-xs border">
+                      <p className="text-sm text-foreground">
                         Hi! I'm your AI assistant. I can answer questions about our products, pricing, and features. How can I help you today?
                       </p>
                     </div>
@@ -74,30 +74,30 @@ const Demo: React.FC = () => {
 
                   {/* User Message */}
                   <div className="flex items-start space-x-3 justify-end">
-                    <div className="bg-primary text-white rounded-lg p-3 shadow-sm max-w-xs">
+                    <div className="bg-primary text-primary-foreground rounded-lg p-3 shadow-sm max-w-xs">
                       <p className="text-sm">
                         What pricing plans do you offer?
                       </p>
                     </div>
-                    <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
-                      <User className="w-5 h-5 text-gray-600" />
+                    <div className="w-8 h-8 bg-accent/20 rounded-full flex items-center justify-center flex-shrink-0">
+                      <User className="w-5 h-5 text-accent" />
                     </div>
                   </div>
 
                   {/* Bot Response */}
                   <div className="flex items-start space-x-3">
                     <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
-                      <Bot className="w-5 h-5 text-white" />
+                      <Bot className="w-5 h-5 text-primary-foreground" />
                     </div>
-                    <div className="bg-white rounded-lg p-3 shadow-sm max-w-xs">
-                      <p className="text-sm text-gray-800">
+                    <div className="bg-card rounded-lg p-3 shadow-sm max-w-xs border">
+                      <p className="text-sm text-foreground">
                         We offer three pricing plans:
                         <br /><br />
-                        <strong>Free Plan:</strong> $0/month - Perfect for testing with 1 chatbot and 100 messages
+                        <strong>Starter Plan:</strong> $19/month - Perfect for small businesses with 1 chatbot and 1,000 messages
                         <br /><br />
-                        <strong>Pro Plan:</strong> $29/month - For growing businesses with 5 chatbots and 1,000 messages
+                        <strong>Professional Plan:</strong> $45/month - For growing businesses with 5 chatbots and 10,000 messages
                         <br /><br />
-                        <strong>Enterprise:</strong> $99/month - Unlimited everything with dedicated support
+                        <strong>Custom:</strong> Custom pricing - Tailored to your specific needs with dedicated support
                       </p>
                     </div>
                   </div>
@@ -105,20 +105,20 @@ const Demo: React.FC = () => {
                   {/* Typing Indicator */}
                   <div className="flex items-start space-x-3">
                     <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
-                      <Bot className="w-5 h-5 text-white" />
+                      <Bot className="w-5 h-5 text-primary-foreground" />
                     </div>
-                    <div className="bg-white rounded-lg p-3 shadow-sm">
+                    <div className="bg-card rounded-lg p-3 shadow-sm border">
                       <div className="flex space-x-1">
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"></div>
+                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Input Area */}
-                <div className="p-4 border-t border-gray-200 bg-white">
+                <div className="p-4 border-t bg-background">
                   <div className="flex items-center space-x-2">
                     <Input
                       placeholder="Try asking about features..."
@@ -129,7 +129,7 @@ const Demo: React.FC = () => {
                       <Send className="w-4 h-4" />
                     </Button>
                   </div>
-                  <p className="text-xs text-gray-500 mt-2 text-center">
+                  <p className="text-xs text-muted-foreground mt-2 text-center">
                     This is a demo preview. Book a demo to try it live!
                   </p>
                 </div>
@@ -141,8 +141,8 @@ const Demo: React.FC = () => {
           <div>
             <Card className="shadow-lg">
               <CardHeader>
-                <h3 className="text-2xl font-bold text-gray-900">Book a Live Demo</h3>
-                <p className="text-gray-600">
+                <h3 className="text-2xl font-bold text-foreground">Book a Live Demo</h3>
+                <p className="text-muted-foreground">
                   See how our AI chatbot can transform your customer support
                 </p>
               </CardHeader>
@@ -184,14 +184,14 @@ const Demo: React.FC = () => {
 
                   <Button
                     type="submit"
-                    className="w-full bg-gradient-to-r from-primary to-primary-dark hover:opacity-90"
+                    className="w-full bg-gradient-to-r from-primary to-primary hover:opacity-90"
                     size="lg"
                   >
                     <MessageCircle className="w-5 h-5 mr-2" />
                     Schedule Demo
                   </Button>
 
-                  <p className="text-xs text-gray-500 text-center">
+                  <p className="text-xs text-muted-foreground text-center">
                     Our team will contact you within 24 hours to schedule your personalized demo
                   </p>
                 </form>
@@ -200,8 +200,8 @@ const Demo: React.FC = () => {
 
             {/* Benefits */}
             <div className="mt-8 space-y-4">
-              <h4 className="font-semibold text-gray-900">What you'll learn:</h4>
-              <ul className="space-y-2 text-gray-600">
+              <h4 className="font-semibold text-foreground">What you'll learn:</h4>
+              <ul className="space-y-2 text-muted-foreground">
                 <li className="flex items-start">
                   <MessageCircle className="w-5 h-5 text-primary mr-2 mt-0.5" />
                   <span>How to train your chatbot on your company data</span>

@@ -11,7 +11,9 @@ import {
   deleteDataSource,
   getDataSourceChunks,
 } from '../controllers/chatbotController';
+import { customizationController } from '../controllers/customizationController';
 import { authenticateToken } from '../middleware/auth';
+import { loadUserPlan, loadUsageStats, enforceChatbotLimit } from '../middleware/planEnforcement';
 import {
   createChatbotValidation,
   addUrlSourceValidation,
@@ -24,7 +26,7 @@ const router = Router();
 router.use(authenticateToken);
 
 // Chatbot CRUD
-router.post('/', createChatbotValidation, createChatbot);
+router.post('/', loadUserPlan, loadUsageStats, enforceChatbotLimit, createChatbotValidation, createChatbot);
 router.get('/', getChatbots);
 router.get('/:id', getChatbot);
 router.delete('/:id', deleteChatbot);
@@ -38,5 +40,10 @@ router.delete('/:id/sources/:sourceId', deleteDataSource);
 
 // Status
 router.get('/:id/status', getChatbotStatus);
+
+// Customization
+router.get('/:id/customization', customizationController.getCustomization);
+router.put('/:id/customization', customizationController.updateCustomization);
+router.delete('/:id/customization', customizationController.resetCustomization);
 
 export default router;
