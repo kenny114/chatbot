@@ -31,7 +31,7 @@ const Pricing: React.FC = () => {
     }
   };
 
-  const handleCreateSubscription = (data: any, actions: any, paypalPlanId: string) => {
+  const handleCreateSubscription = (_data: any, actions: any, paypalPlanId: string) => {
     return actions.subscription.create({
       plan_id: paypalPlanId
     });
@@ -107,7 +107,6 @@ const Pricing: React.FC = () => {
             const isCurrentPlan = subscription?.plan_id === plan.id;
             const isHighlighted = plan.highlighted;
             const isFree = plan.id === 'free';
-            const isPro = plan.id === 'pro';
             const isCustom = plan.id === 'custom';
 
             return (

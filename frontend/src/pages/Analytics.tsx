@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Download, TrendingUp, MessageSquare, Users, Clock, Lock } from 'lucide-react';
+import { Download, TrendingUp, MessageSquare, Users, Clock, Lock } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import StatCard from '../components/StatCard';
 import LineChart from '../components/charts/LineChart';
 import BarChart from '../components/charts/BarChart';
-import LoadingState from '../components/LoadingState';
+import { PageLoadingState } from '../components/LoadingState';
 import { analyticsAPI, chatbotAPI } from '../services/api';
 import { Chatbot } from '../types';
 import { useAuth } from '../contexts/AuthContext';
@@ -106,7 +106,7 @@ const Analytics: React.FC = () => {
   }
 
   if (loading) {
-    return <LoadingState message="Loading analytics..." />;
+    return <PageLoadingState message="Loading analytics..." />;
   }
 
   if (error) {
@@ -178,21 +178,21 @@ const Analytics: React.FC = () => {
           label="Total Messages"
           value={overview?.totalMessages?.toLocaleString() || '0'}
           icon={MessageSquare}
-          trend={Math.round(overview?.trend?.messages || 0)}
+          trend={{ value: Math.round(overview?.trend?.messages || 0) }}
           description={`${overview?.trend?.messages >= 0 ? '+' : ''}${Math.round(overview?.trend?.messages || 0)}% from last period`}
         />
         <StatCard
           label="Unique Users"
           value={overview?.uniqueUsers?.toLocaleString() || '0'}
           icon={Users}
-          trend={Math.round(overview?.trend?.users || 0)}
+          trend={{ value: Math.round(overview?.trend?.users || 0) }}
           description={`${overview?.trend?.users >= 0 ? '+' : ''}${Math.round(overview?.trend?.users || 0)}% from last period`}
         />
         <StatCard
           label="Avg Response Time"
           value={`${(overview?.avgResponseTime / 1000 || 0).toFixed(1)}s`}
           icon={Clock}
-          trend={Math.round(overview?.trend?.responseTime || 0)}
+          trend={{ value: Math.round(overview?.trend?.responseTime || 0) }}
           description={`${overview?.trend?.responseTime >= 0 ? '+' : ''}${Math.round(overview?.trend?.responseTime || 0)}% from last period`}
           iconClassName="bg-info-100 dark:bg-info-900"
         />
@@ -200,7 +200,7 @@ const Analytics: React.FC = () => {
           label="Satisfaction Rate"
           value={`${Math.round(overview?.satisfactionRate || 0)}%`}
           icon={TrendingUp}
-          trend={Math.round(overview?.trend?.satisfaction || 0)}
+          trend={{ value: Math.round(overview?.trend?.satisfaction || 0) }}
           description={`${overview?.trend?.satisfaction >= 0 ? '+' : ''}${Math.round(overview?.trend?.satisfaction || 0)}% from last period`}
           iconClassName="bg-success-100 dark:bg-success-900"
         />

@@ -40,12 +40,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../components/ui/dialog';
-import { cn } from '@/lib/utils';
-
 const ChatbotDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { isFreePlan, canGoLive } = usePlan();
+  const { isFreePlan } = usePlan();
   const [chatbot, setChatbot] = useState<Chatbot | null>(null);
   const [dataSources, setDataSources] = useState<DataSource[]>([]);
   const [isLoading, setIsLoading] = useState(true);

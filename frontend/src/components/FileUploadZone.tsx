@@ -28,7 +28,7 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<FileWithPreview[]>([]);
   const [error, setError] = useState<string>('');
-  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [uploadProgress] = useState<number>(0);
 
   const maxSizeBytes = maxSizeMB * 1024 * 1024;
 

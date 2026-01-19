@@ -19,18 +19,18 @@ const Settings: React.FC = () => {
   const [weeklyReports, setWeeklyReports] = useState(true);
   const [securityAlerts, setSecurityAlerts] = useState(true);
   const [usage, setUsage] = useState({ chatbotsUsed: 0, messagesUsed: 0 });
-  const [loadingUsage, setLoadingUsage] = useState(true);
 
   // Fetch usage data
   useEffect(() => {
     const fetchUsage = async () => {
       try {
         const data = await usageAPI.getUsage();
-        setUsage({ chatbotsUsed: data.chatbotsUsed, messagesUsed: data.messagesUsed });
+        setUsage({
+          chatbotsUsed: data.usage?.chatbotsUsed || 0,
+          messagesUsed: data.usage?.messagesUsed || 0
+        });
       } catch (error) {
         console.error('Failed to fetch usage:', error);
-      } finally {
-        setLoadingUsage(false);
       }
     };
     fetchUsage();
