@@ -60,7 +60,7 @@ const EmbeddableWidget: React.FC<EmbeddableWidgetProps> = ({
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${apiUrl}/api/webhook/${chatbotId}`, {
+      const response = await fetch(`${apiUrl}/api/webhooks/${chatbotId}/query`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
