@@ -8,6 +8,10 @@ export default defineConfig(({ command, mode }) => {
   if (isWidget) {
     // Widget-specific build configuration
     return {
+      mode: 'production',
+      define: {
+        'process.env.NODE_ENV': JSON.stringify('production'),
+      },
       plugins: [react()],
       resolve: {
         alias: {
@@ -15,8 +19,10 @@ export default defineConfig(({ command, mode }) => {
         },
       },
       build: {
-        outDir: 'dist',
+        outDir: 'dist-widget',
+        emptyOutDir: false,
         sourcemap: true,
+        minify: 'esbuild',
         lib: {
           entry: path.resolve(__dirname, 'src/widget.tsx'),
           name: 'ChatbotWidget',

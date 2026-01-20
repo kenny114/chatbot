@@ -4,8 +4,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build && npm run build:widget",
-    "build:widget": "cross-env BUILD_WIDGET=true vite build",
+    "build": "tsc && vite build && npm run build:widget && npm run copy:widget",
+    "build:widget": "cross-env NODE_ENV=production BUILD_WIDGET=true vite build",
+    "copy:widget": "node -e \"require('fs').copyFileSync('dist-widget/widget.js', 'dist/widget.js'); require('fs').copyFileSync('dist-widget/widget.js.map', 'dist/widget.js.map');\"",
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
