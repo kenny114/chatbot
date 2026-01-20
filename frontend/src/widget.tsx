@@ -63,4 +63,35 @@ declare global {
 
 window.ChatbotWidget = ChatbotWidget;
 
+// Auto-initialize from script tag data attributes
+(function autoInit() {
+  const currentScript = document.currentScript as HTMLScriptElement;
+  if (currentScript) {
+    const chatbotId = currentScript.getAttribute('data-chatbot-id');
+    const position = currentScript.getAttribute('data-position') as 'bottom-right' | 'bottom-left' | null;
+    const primaryColor = currentScript.getAttribute('data-primary-color');
+
+    if (chatbotId) {
+      // Wait for DOM to be ready
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+          const widget = new ChatbotWidget({
+            chatbotId,
+            position: position || 'bottom-right',
+            primaryColor: primaryColor || '#3b82f6'
+          });
+          widget.init();
+        });
+      } else {
+        const widget = new ChatbotWidget({
+          chatbotId,
+          position: position || 'bottom-right',
+          primaryColor: primaryColor || '#3b82f6'
+        });
+        widget.init();
+      }
+    }
+  }
+})();
+
 export default ChatbotWidget;
