@@ -17,6 +17,9 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Trust Railway proxy for rate limiting and IP detection
+app.set('trust proxy', 1);
+
 // Middleware
 app.use(helmet({
   contentSecurityPolicy: {
@@ -33,8 +36,9 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false, // Needed for PayPal iframe
 }));
 
+// CORS - Allow all origins for widget embedding
 app.use(cors({
-  origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:5173'],
+  origin: process.env.ALLOWED_ORIGINS?.split(',') || '*',
   credentials: true,
 }));
 

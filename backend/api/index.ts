@@ -16,6 +16,9 @@ dotenv.config();
 
 const app = express();
 
+// Trust proxy for rate limiting and IP detection
+app.set('trust proxy', 1);
+
 // Middleware
 app.use(helmet({
   contentSecurityPolicy: {
@@ -32,9 +35,10 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
 }));
 
+// CORS - Allow all origins for widget embedding
 app.use(cors({
-  origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:5173', 'https://chatbotfrontend-gamma.vercel.app', '*'],
-  credentials: true,
+  origin: '*',
+  credentials: false,
 }));
 
 app.use(express.json({ limit: '10mb' }));
