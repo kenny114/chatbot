@@ -24,7 +24,7 @@ const EmbeddableWidget: React.FC<EmbeddableWidgetProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const apiUrl = 'https://chatbotbackend-kappa.vercel.app';
+  const apiUrl = 'https://eloquent-mercy-production.up.railway.app';
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
