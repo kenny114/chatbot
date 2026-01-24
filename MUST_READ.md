@@ -136,6 +136,15 @@ VITE_API_URL=https://your-backend-url.com (for production)
 
 ---
 
+## Contact / Support
+
+| Type | Email |
+|------|-------|
+| **Support** | altraverse.tt@gmail.com |
+| **Sales** | altraverse.tt@gmail.com |
+
+---
+
 ## Quick Commands
 
 ```bash
