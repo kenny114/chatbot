@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { PayPalButtons } from '@paypal/react-paypal-js';
+import PayPalButton from '../components/PayPalButton';
 import { paymentAPI } from '../services/api';
 import { PaymentPlan } from '../types';
 import { useNavigate } from 'react-router-dom';
@@ -197,17 +197,10 @@ const Pricing: React.FC = () => {
                       Current Plan
                     </button>
                   ) : plan.paypal_plan_id && selectedPlan === plan.id ? (
-                    <PayPalButtons
-                      style={{
-                        shape: 'rect',
-                        color: 'gold',
-                        layout: 'vertical',
-                        label: 'subscribe'
-                      }}
-                      createSubscription={(data, actions) =>
-                        handleCreateSubscription(data, actions, plan.paypal_plan_id!)
-                      }
-                      onApprove={(data) => handleApprove(data, plan.id)}
+                    <PayPalButton
+                      planId={plan.id}
+                      paypalPlanId={plan.paypal_plan_id}
+                      onApprove={(subscriptionId) => handleApprove({ subscriptionID: subscriptionId }, plan.id)}
                       onCancel={() => setSelectedPlan(null)}
                       onError={(err) => {
                         console.error('PayPal error:', err);
