@@ -93,8 +93,8 @@ This means the remote repo has commits not in your local history. Options:
 
 | Service | URL |
 |---------|-----|
-| **Frontend (Vercel)** | https://chatbotfrontend.vercel.app (or your domain) |
-| **Backend (Railway)** | https://chatbotbackend-production.up.railway.app |
+| **Frontend (Vercel)** | https://chatbotfrontend-gamma.vercel.app |
+| **Backend (Railway)** | https://eloquent-mercy-production.up.railway.app |
 
 ---
 
