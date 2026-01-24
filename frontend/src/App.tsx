@@ -1,5 +1,6 @@
 import React, { Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { PayPalScriptProvider } from '@paypal/react-paypal-js';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { PlanProvider } from './contexts/PlanContext';
@@ -15,6 +16,8 @@ import Settings from './pages/Settings';
 import Pricing from './pages/Pricing';
 import PaymentSuccess from './pages/PaymentSuccess';
 import PaymentCancel from './pages/PaymentCancel';
+
+const PAYPAL_CLIENT_ID = import.meta.env.VITE_PAYPAL_CLIENT_ID || '';
 
 const LoadingSpinner: React.FC = () => (
   <div style={{
@@ -96,7 +99,15 @@ const App: React.FC = () => {
     <ThemeProvider>
       <AuthProvider>
         <PlanProvider>
-          <AppContent />
+          <PayPalScriptProvider
+            options={{
+              clientId: PAYPAL_CLIENT_ID,
+              vault: true,
+              intent: 'subscription',
+            }}
+          >
+            <AppContent />
+          </PayPalScriptProvider>
         </PlanProvider>
       </AuthProvider>
     </ThemeProvider>

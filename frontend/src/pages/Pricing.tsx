@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
+import { PayPalButtons } from '@paypal/react-paypal-js';
 import { paymentAPI } from '../services/api';
 import { PaymentPlan } from '../types';
 import { useNavigate } from 'react-router-dom';
@@ -88,16 +88,7 @@ const Pricing: React.FC = () => {
     );
   }
 
-  const paypalClientId = import.meta.env.VITE_PAYPAL_CLIENT_ID || '';
-
   return (
-    <PayPalScriptProvider
-      options={{
-        clientId: paypalClientId,
-        vault: true,
-        intent: 'subscription',
-      }}
-    >
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-16 px-4">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
@@ -449,7 +440,6 @@ const Pricing: React.FC = () => {
         </div>
       </div>
     </div>
-    </PayPalScriptProvider>
   );
 };
 
