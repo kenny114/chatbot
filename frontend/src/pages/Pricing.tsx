@@ -88,7 +88,16 @@ const Pricing: React.FC = () => {
     );
   }
 
+  const paypalClientId = import.meta.env.VITE_PAYPAL_CLIENT_ID || '';
+
   return (
+    <PayPalScriptProvider
+      options={{
+        clientId: paypalClientId,
+        vault: true,
+        intent: 'subscription',
+      }}
+    >
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-16 px-4">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
@@ -197,31 +206,23 @@ const Pricing: React.FC = () => {
                       Current Plan
                     </button>
                   ) : plan.paypal_plan_id && selectedPlan === plan.id ? (
-                    <PayPalScriptProvider
-                      options={{
-                        clientId: import.meta.env.VITE_PAYPAL_CLIENT_ID || '',
-                        vault: true,
-                        intent: 'subscription',
+                    <PayPalButtons
+                      style={{
+                        shape: 'rect',
+                        color: 'gold',
+                        layout: 'vertical',
+                        label: 'subscribe'
                       }}
-                    >
-                      <PayPalButtons
-                        style={{
-                          shape: 'rect',
-                          color: 'gold',
-                          layout: 'vertical',
-                          label: 'subscribe'
-                        }}
-                        createSubscription={(data, actions) =>
-                          handleCreateSubscription(data, actions, plan.paypal_plan_id!)
-                        }
-                        onApprove={(data) => handleApprove(data, plan.id)}
-                        onCancel={() => setSelectedPlan(null)}
-                        onError={(err) => {
-                          console.error('PayPal error:', err);
-                          setError('Payment processing failed. Please try again.');
-                        }}
-                      />
-                    </PayPalScriptProvider>
+                      createSubscription={(data, actions) =>
+                        handleCreateSubscription(data, actions, plan.paypal_plan_id!)
+                      }
+                      onApprove={(data) => handleApprove(data, plan.id)}
+                      onCancel={() => setSelectedPlan(null)}
+                      onError={(err) => {
+                        console.error('PayPal error:', err);
+                        setError('Payment processing failed. Please try again.');
+                      }}
+                    />
                   ) : (
                     <button
                       onClick={() => handleCtaClick(plan)}
@@ -448,6 +449,7 @@ const Pricing: React.FC = () => {
         </div>
       </div>
     </div>
+    </PayPalScriptProvider>
   );
 };
 
