@@ -47,7 +47,7 @@ const Pricing: React.FC = () => {
 
   const handleCtaClick = (plan: PaymentPlan) => {
     if (plan.cta_action === 'contact') {
-      window.location.href = 'mailto:sales@yourcompany.com?subject=Custom Plan Inquiry';
+      window.location.href = 'mailto:altraverse.tt@gmail.com?subject=Custom Plan Inquiry';
     } else if (plan.cta_action === 'upgrade' && !user) {
       navigate('/register');
     } else {
@@ -417,7 +417,7 @@ const Pricing: React.FC = () => {
           <p className="text-slate-400">
             Have questions? {' '}
             <a
-              href="mailto:support@yourcompany.com"
+              href="mailto:altraverse.tt@gmail.com"
               className="text-indigo-400 hover:text-indigo-300 transition"
             >
               Contact us

@@ -73,7 +73,7 @@ const pricingTiers: PricingTier[] = [
       'Dedicated support',
     ],
     cta: 'Contact Sales',
-    ctaLink: 'mailto:sales@yourcompany.com?subject=Custom Plan Inquiry',
+    ctaLink: 'mailto:altraverse.tt@gmail.com?subject=Custom Plan Inquiry',
   },
 ];
 
