@@ -1,36 +1,67 @@
 # MUST READ - Project Key Information
 
+---
+## ⚠️ IMPORTANT: Git Repository Structure
+---
+
+This project has **ONE local folder** but pushes to **THREE separate GitHub repos**.
+
+The `frontend/` and `backend/` folders do **NOT** have their own `.git` folders.
+Instead, we use **git subtree** to push specific folders to their own repos.
+
+---
+
 ## GitHub Repositories
 
-This project uses 3 separate GitHub repositories:
+| Repo | URL | Contains | Deployed To |
+|------|-----|----------|-------------|
+| **Main** | https://github.com/kenny114/chatbot.git | Everything (full monorepo) | - |
+| **Backend** | https://github.com/kenny114/chatbotbackend.git | Only `backend/` folder | Railway |
+| **Frontend** | https://github.com/kenny114/chatbotfrontend-.git | Only `frontend/` folder | Vercel |
 
-| Repo | URL | Purpose | Deployed To |
-|------|-----|---------|-------------|
-| **Main** | https://github.com/kenny114/chatbot.git | Full monorepo with all code | - |
-| **Backend** | https://github.com/kenny114/chatbotbackend.git | Backend API only | Railway |
-| **Frontend** | https://github.com/kenny114/chatbotfrontend-.git | Frontend only | Vercel |
+### Git Remotes Configured Locally
+```
+origin        → https://github.com/kenny114/chatbot.git (Main)
+backend-repo  → https://github.com/kenny114/chatbotbackend.git
+frontend-repo → https://github.com/kenny114/chatbotfrontend-.git
+```
 
-### Git Remotes (in local repo)
-- `origin` → Main repo (chatbot.git)
-- `backend-repo` → Backend repo (chatbotbackend.git)
-- `frontend-repo` → Frontend repo (chatbotfrontend-.git)
+---
 
-### How to Push Changes
+## ⚠️ How to Push Changes (READ CAREFULLY)
 
-**Push to Main repo:**
+### Step 1: Always commit to main repo first
 ```bash
+git add <files>
+git commit -m "Your message"
 git push origin main
 ```
 
-**Push backend changes to Backend repo:**
+### Step 2: Push to separate repos using SUBTREE
+
+**For backend changes:**
 ```bash
 git subtree push --prefix=backend backend-repo main
 ```
 
-**Push frontend changes to Frontend repo:**
+**For frontend changes:**
 ```bash
 git subtree push --prefix=frontend frontend-repo main
 ```
+
+### ⚠️ If subtree push fails with "rejected" error:
+This means the remote repo has commits not in your local history. Options:
+1. **Force push** (overwrites remote - use carefully):
+   ```bash
+   git push backend-repo $(git subtree split --prefix=backend):main --force
+   git push frontend-repo $(git subtree split --prefix=frontend):main --force
+   ```
+2. **Or just push to main repo only** - Railway/Vercel may be configured to pull from main repo instead
+
+### ⚠️ DO NOT:
+- Create separate `.git` folders inside `frontend/` or `backend/`
+- Push directly to backend-repo or frontend-repo without using subtree
+- Use `git subtree pull` without understanding the implications
 
 ---
 
