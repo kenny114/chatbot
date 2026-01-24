@@ -115,7 +115,7 @@ export const UpgradeBanner: React.FC<UpgradeBannerProps> = ({
               </Button>
             </Link>
             <span className="text-sm text-muted-foreground">
-              $19.99/month
+              $45/month
             </span>
           </div>
         </div>

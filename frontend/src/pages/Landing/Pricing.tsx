@@ -43,7 +43,7 @@ const pricingTiers: PricingTier[] = [
     id: 'pro',
     name: 'Pro',
     description: 'Go Live & Capture Leads',
-    price: '$19.99',
+    price: '$45',
     priceNote: '/month',
     features: [
       'Everything in Free',
