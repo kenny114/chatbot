@@ -67,7 +67,7 @@ This means the remote repo has commits not in your local history. Options:
 
 ## PayPal Configuration
 
-### Current Plan: Pro ($19.99/month)
+### Current Plan: Pro ($45/month)
 
 | Setting | Value | Location |
 |---------|-------|----------|
@@ -80,7 +80,7 @@ This means the remote repo has commits not in your local history. Options:
 | Plan | Price | PayPal Plan ID |
 |------|-------|----------------|
 | Free | $0 | None (no payment) |
-| Pro | $19.99/month | `P-18P894864X127040SNFQOK4Q` |
+| Pro | $45/month | `P-18P894864X127040SNFQOK4Q` |
 | Custom | Contact Sales | None (manual) |
 
 ### To Update PayPal Plan ID

@@ -178,7 +178,7 @@ const Settings: React.FC = () => {
                   <h3 className="text-lg font-semibold text-foreground">{currentPlan} Plan</h3>
                   <p className="text-sm text-muted-foreground">
                     {normalizedPlan === 'starter' && '$19/month'}
-                    {normalizedPlan === 'pro' && '$19.99/month'}
+                    {normalizedPlan === 'pro' && '$45/month'}
                     {normalizedPlan === 'enterprise' && 'Custom pricing'}
                     {normalizedPlan === 'free' && 'Free'}
                   </p>

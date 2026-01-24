@@ -43,9 +43,9 @@ const PAYMENT_PLANS: PaymentPlan[] = [
   {
     id: 'pro',
     name: 'Pro',
-    price: 19.99,
+    price: 45,
     currency: 'USD',
-    description: '$19.99/month',
+    description: '$45/month',
     shortDescription: 'Go live and turn website visitors into qualified leads.',
     features: [
       'Live website embed',
