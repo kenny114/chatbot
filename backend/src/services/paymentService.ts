@@ -66,7 +66,7 @@ const PAYMENT_PLANS: PaymentPlan[] = [
     branding_removal: true,
     analytics_access: 'full',
     business_hours: true,
-    paypal_plan_id: 'P-1KR3765900535471CNFT633Q',
+    paypal_plan_id: 'P-18P894864X127040SNFQOK4Q',
     cta_text: 'Get Pro',
     cta_action: 'subscribe',
     highlighted: true           // Recommended plan
