@@ -31,12 +31,6 @@ const Pricing: React.FC = () => {
     }
   };
 
-  const handleCreateSubscription = (_data: any, actions: any, paypalPlanId: string) => {
-    return actions.subscription.create({
-      plan_id: paypalPlanId
-    });
-  };
-
   const handleApprove = async (data: any, planId: string) => {
     try {
       console.log('Subscription approved:', data.subscriptionID);
@@ -198,7 +192,6 @@ const Pricing: React.FC = () => {
                     </button>
                   ) : plan.paypal_plan_id && selectedPlan === plan.id ? (
                     <PayPalButton
-                      planId={plan.id}
                       paypalPlanId={plan.paypal_plan_id}
                       onApprove={(subscriptionId) => handleApprove({ subscriptionID: subscriptionId }, plan.id)}
                       onCancel={() => setSelectedPlan(null)}

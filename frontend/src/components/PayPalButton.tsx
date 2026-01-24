@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 
 interface PayPalButtonProps {
-  planId: string;
   paypalPlanId: string;
   onApprove: (subscriptionId: string) => void;
   onCancel: () => void;
@@ -17,7 +16,6 @@ declare global {
 const PAYPAL_CLIENT_ID = (import.meta.env.VITE_PAYPAL_CLIENT_ID || '').trim();
 
 const PayPalButton: React.FC<PayPalButtonProps> = ({
-  planId,
   paypalPlanId,
   onApprove,
   onCancel,
