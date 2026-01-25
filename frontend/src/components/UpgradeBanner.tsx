@@ -21,17 +21,17 @@ export const UpgradeBanner: React.FC<UpgradeBannerProps> = ({
   if (!isFreePlan) return null;
 
   // Determine which message to show
-  let title = 'Ready to Go Live?';
-  let message = 'Your assistant is ready. Publish it to your website to start capturing leads.';
+  let title = 'Put Your Bot Live';
+  let message = 'Upgrade to Pro to embed your chatbot on your website and start capturing leads.';
   let urgent = false;
 
   if (isAtChatbotLimit) {
     title = 'Chatbot Limit Reached';
-    message = `You've reached your limit of ${limits?.chatbotLimit} chatbot. Upgrade to create more.`;
+    message = `You've reached your limit of ${limits?.chatbotLimit} chatbot. Upgrade to Pro to create more.`;
     urgent = true;
   } else if (isAtPreviewLimit) {
-    title = 'Preview Messages Used';
-    message = `You've used ${usage?.previewMessagesUsed}/${limits?.previewMessageLimit} preview messages. Upgrade for unlimited testing.`;
+    title = 'Go Live with Pro';
+    message = 'Upgrade to Pro for unlimited conversations and to publish your bot on your website.';
     urgent = true;
   }
 
@@ -171,8 +171,8 @@ export const UsageLimitWarning: React.FC<{
       <AlertCircle className="w-4 h-4" />
       <span>
         {type === 'chatbot'
-          ? `${current}/${limit} chatbots used`
-          : `${current}/${limit} preview messages used`}
+          ? `${current}/${limit} chatbots created`
+          : 'Go live with Pro for unlimited messages'}
       </span>
       {isAtLimit && (
         <Link to="/pricing" className="font-medium ml-2 hover:underline">
