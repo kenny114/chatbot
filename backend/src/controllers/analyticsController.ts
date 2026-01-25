@@ -1,6 +1,25 @@
 import { Request, Response } from 'express';
 import { analyticsService } from '../services/analyticsService';
 
+// SECURITY: Validate and sanitize query parameters
+const ALLOWED_TIME_RANGES = ['1d', '7d', '30d', '90d'];
+const MAX_LIMIT = 100;
+const DEFAULT_LIMIT = 20;
+
+const validateTimeRange = (timeRange: string | undefined): string => {
+  if (!timeRange || !ALLOWED_TIME_RANGES.includes(timeRange)) {
+    return '7d'; // Default
+  }
+  return timeRange;
+};
+
+const validateLimit = (limit: string | undefined): number => {
+  const parsed = parseInt(limit || String(DEFAULT_LIMIT), 10);
+  if (isNaN(parsed) || parsed < 1) return DEFAULT_LIMIT;
+  if (parsed > MAX_LIMIT) return MAX_LIMIT;
+  return parsed;
+};
+
 export const analyticsController = {
   /**
    * GET /api/analytics/overview
@@ -9,7 +28,7 @@ export const analyticsController = {
   async getOverview(req: any, res: Response) {
     try {
       const userId = req.userId;
-      const { chatbotId, timeRange = '7d' } = req.query;
+      const { chatbotId, timeRange } = req.query;
 
       if (!userId) {
         return res.status(401).json({ error: 'Unauthorized' });
@@ -18,7 +37,7 @@ export const analyticsController = {
       const overview = await analyticsService.getOverview(
         userId,
         chatbotId as string | undefined,
-        timeRange as string
+        validateTimeRange(timeRange as string)
       );
 
       res.json(overview);
@@ -35,7 +54,7 @@ export const analyticsController = {
   async getMessagesOverTime(req: any, res: Response) {
     try {
       const userId = req.userId;
-      const { chatbotId, timeRange = '7d' } = req.query;
+      const { chatbotId, timeRange } = req.query;
 
       if (!userId) {
         return res.status(401).json({ error: 'Unauthorized' });
@@ -44,7 +63,7 @@ export const analyticsController = {
       const messages = await analyticsService.getMessagesOverTime(
         userId,
         chatbotId as string | undefined,
-        timeRange as string
+        validateTimeRange(timeRange as string)
       );
 
       res.json({ messages });
@@ -61,7 +80,7 @@ export const analyticsController = {
   async getPopularQuestions(req: any, res: Response) {
     try {
       const userId = req.userId;
-      const { chatbotId, limit = '10' } = req.query;
+      const { chatbotId, limit } = req.query;
 
       if (!userId) {
         return res.status(401).json({ error: 'Unauthorized' });
@@ -70,7 +89,7 @@ export const analyticsController = {
       const questions = await analyticsService.getPopularQuestions(
         userId,
         chatbotId as string | undefined,
-        parseInt(limit as string)
+        validateLimit(limit as string)
       );
 
       res.json({ questions });
@@ -112,7 +131,7 @@ export const analyticsController = {
   async getConversations(req: any, res: Response) {
     try {
       const userId = req.userId;
-      const { chatbotId, limit = '20' } = req.query;
+      const { chatbotId, limit } = req.query;
 
       if (!userId) {
         return res.status(401).json({ error: 'Unauthorized' });
@@ -121,7 +140,7 @@ export const analyticsController = {
       const conversations = await analyticsService.getRecentConversations(
         userId,
         chatbotId as string | undefined,
-        parseInt(limit as string)
+        validateLimit(limit as string)
       );
 
       res.json({ conversations });

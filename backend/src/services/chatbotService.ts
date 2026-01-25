@@ -348,9 +348,22 @@ export class ChatbotService {
 
   /**
    * Deletes a data source and its associated content chunks
+   * SECURITY: Requires chatbotId to verify ownership
    */
-  async deleteDataSource(dataSourceId: string): Promise<void> {
+  async deleteDataSource(dataSourceId: string, chatbotId: string): Promise<void> {
     try {
+      // SECURITY: Verify the data source belongs to the specified chatbot
+      const { data: dataSource, error: verifyError } = await supabaseAdmin
+        .from('data_sources')
+        .select('id')
+        .eq('id', dataSourceId)
+        .eq('chatbot_id', chatbotId)
+        .single();
+
+      if (verifyError || !dataSource) {
+        throw new AppError('Data source not found or access denied', 404);
+      }
+
       // Delete associated content chunks first (CASCADE should handle this, but being explicit)
       await supabaseAdmin
         .from('content_chunks')
@@ -361,13 +374,15 @@ export class ChatbotService {
       const { error } = await supabaseAdmin
         .from('data_sources')
         .delete()
-        .eq('id', dataSourceId);
+        .eq('id', dataSourceId)
+        .eq('chatbot_id', chatbotId); // Extra safety
 
       if (error) {
         throw new AppError('Failed to delete data source', 500);
       }
     } catch (error) {
       console.error('Delete data source error:', error);
+      if (error instanceof AppError) throw error;
       throw new AppError('Failed to delete data source', 500);
     }
   }

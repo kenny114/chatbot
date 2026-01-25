@@ -71,16 +71,61 @@ export const chatValidation = [
   validateRequest
 ];
 
-// URL sanitization - prevents common attacks
+// SECURITY: Check if hostname is a private/internal IP address (SSRF protection)
+const isPrivateIP = (hostname: string): boolean => {
+  // Block localhost variations
+  if (['localhost', '127.0.0.1', '0.0.0.0', '::1', '[::1]'].includes(hostname.toLowerCase())) {
+    return true;
+  }
+
+  // Check for private IP ranges
+  const ipv4Regex = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+  const match = hostname.match(ipv4Regex);
+
+  if (match) {
+    const [, a, b, c] = match.map(Number);
+    // 10.x.x.x (Class A private)
+    if (a === 10) return true;
+    // 172.16.x.x - 172.31.x.x (Class B private)
+    if (a === 172 && b >= 16 && b <= 31) return true;
+    // 192.168.x.x (Class C private)
+    if (a === 192 && b === 168) return true;
+    // 169.254.x.x (Link-local)
+    if (a === 169 && b === 254) return true;
+    // 127.x.x.x (Loopback)
+    if (a === 127) return true;
+  }
+
+  return false;
+};
+
+// URL sanitization - prevents common attacks and SSRF
 export const sanitizeUrl = (url: string): string => {
   try {
     const parsed = new URL(url);
+
     // Only allow http and https protocols
     if (!['http:', 'https:'].includes(parsed.protocol)) {
-      throw new Error('Invalid protocol');
+      throw new Error('Invalid protocol - only HTTP and HTTPS allowed');
     }
+
+    // SECURITY: Block private/internal IPs (SSRF protection)
+    if (isPrivateIP(parsed.hostname)) {
+      throw new Error('URL cannot point to internal/private addresses');
+    }
+
+    // Block common cloud metadata endpoints
+    if (parsed.hostname === '169.254.169.254' ||
+        parsed.hostname.endsWith('.internal') ||
+        parsed.hostname.endsWith('.local')) {
+      throw new Error('URL cannot point to internal services');
+    }
+
     return parsed.toString();
   } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
     throw new Error('Invalid URL format');
   }
 };

@@ -112,13 +112,14 @@ export const getChatbotStatus = asyncHandler(async (req: AuthRequest, res: Respo
 });
 
 export const deleteDataSource = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { id, sourceId } = req.params;
+  const { id: chatbotId, sourceId } = req.params;
   const userId = req.userId!;
 
-  // Verify ownership
-  await chatbotService.getChatbot(id, userId);
+  // Verify chatbot ownership
+  await chatbotService.getChatbot(chatbotId, userId);
 
-  await chatbotService.deleteDataSource(sourceId);
+  // SECURITY: Pass chatbotId to verify data source ownership
+  await chatbotService.deleteDataSource(sourceId, chatbotId);
 
   res.status(200).json({
     message: 'Data source deleted successfully',
