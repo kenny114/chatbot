@@ -22,6 +22,21 @@ const Hero: React.FC = () => {
             Get Started
           </Button>
         </Link>
+
+        {/* Demo Video */}
+        <div className="mt-12">
+          <video
+            className="w-full max-w-3xl mx-auto rounded-lg shadow-lg border border-border"
+            controls
+            autoPlay
+            muted
+            loop
+            playsInline
+          >
+            <source src="/demo.mp4" type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+        </div>
       </div>
     </section>
   );
