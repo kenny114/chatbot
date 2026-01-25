@@ -15,7 +15,7 @@ export const UpgradeBanner: React.FC<UpgradeBannerProps> = ({
   onDismiss,
   showDismiss = false,
 }) => {
-  const { isFreePlan, isAtPreviewLimit, isAtChatbotLimit, usage, limits } = usePlan();
+  const { isFreePlan, isAtPreviewLimit, isAtChatbotLimit, limits } = usePlan();
 
   // Don't show if user is not on free plan
   if (!isFreePlan) return null;
