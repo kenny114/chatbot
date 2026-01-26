@@ -155,3 +155,6 @@ declare global {
     }
   }
 }
+
+// Export lead capture types
+export * from './leadCapture';

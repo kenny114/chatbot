@@ -13,6 +13,7 @@ import ChatbotDetail from './pages/ChatbotDetail';
 import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
 import Pricing from './pages/Pricing';
+import Leads from './pages/Leads';
 import PaymentSuccess from './pages/PaymentSuccess';
 import PaymentCancel from './pages/PaymentCancel';
 
@@ -73,6 +74,14 @@ const AppContent: React.FC = () => {
               element={
                 <ProtectedRoute>
                   <Analytics />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/leads"
+              element={
+                <ProtectedRoute>
+                  <Leads />
                 </ProtectedRoute>
               }
             />

@@ -1,16 +1,51 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+
+// Types matching backend
+type ConversationMode = 'INFO_MODE' | 'INTENT_CHECK_MODE' | 'LEAD_CAPTURE_MODE' | 'BOOKING_MODE' | 'CLOSURE_MODE';
+type IntentLevel = 'LOW_INTENT' | 'MEDIUM_INTENT' | 'HIGH_INTENT';
 
 interface Message {
   id: string;
   content: string;
   role: 'user' | 'assistant';
   timestamp: Date;
+  action?: ClientAction;
+}
+
+interface ClientAction {
+  type: 'SHOW_EMAIL_INPUT' | 'SHOW_NAME_INPUT' | 'SHOW_REASON_INPUT' | 'SHOW_BOOKING_LINK' | 'CONVERSATION_CLOSED' | 'NONE';
+  prompt?: string;
+  url?: string;
+  cta_text?: string;
+  message?: string;
+}
+
+interface EnhancedChatResponse {
+  response: string;
+  sources: string[];
+  session_id: string;
+  conversation_id: string;
+  conversation_mode: ConversationMode;
+  intent_level: IntentLevel;
+  actions: ClientAction[];
 }
 
 interface EmbeddableWidgetProps {
   chatbotId: string;
   position?: 'bottom-right' | 'bottom-left';
   primaryColor?: string;
+}
+
+// Session storage key prefix
+const SESSION_STORAGE_KEY = 'chatbot_session_';
+const SESSION_EXPIRY_HOURS = 24;
+
+interface StoredSession {
+  sessionId: string;
+  messages: Message[];
+  conversationMode: ConversationMode;
+  intentLevel: IntentLevel;
+  createdAt: number;
 }
 
 const EmbeddableWidget: React.FC<EmbeddableWidgetProps> = ({
@@ -22,9 +57,63 @@ const EmbeddableWidget: React.FC<EmbeddableWidgetProps> = ({
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
+  const [sessionId, setSessionId] = useState<string>('');
+  const [conversationMode, setConversationMode] = useState<ConversationMode>('INFO_MODE');
+  const [intentLevel, setIntentLevel] = useState<IntentLevel>('LOW_INTENT');
+  const [showEmailInput, setShowEmailInput] = useState(false);
+  const [showBookingButton, setShowBookingButton] = useState(false);
+  const [bookingUrl, setBookingUrl] = useState('');
+  const [bookingCtaText, setBookingCtaText] = useState('Book a Call');
+  const [emailValue, setEmailValue] = useState('');
+  const [isConversationClosed, setIsConversationClosed] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const apiUrl = 'https://eloquent-mercy-production.up.railway.app';
+
+  // Load session from storage on mount
+  useEffect(() => {
+    const storageKey = `${SESSION_STORAGE_KEY}${chatbotId}`;
+    const stored = localStorage.getItem(storageKey);
+
+    if (stored) {
+      try {
+        const session: StoredSession = JSON.parse(stored);
+        const now = Date.now();
+        const hoursOld = (now - session.createdAt) / (1000 * 60 * 60);
+
+        if (hoursOld < SESSION_EXPIRY_HOURS) {
+          // Restore session
+          setSessionId(session.sessionId);
+          setMessages(session.messages.map(m => ({ ...m, timestamp: new Date(m.timestamp) })));
+          setConversationMode(session.conversationMode);
+          setIntentLevel(session.intentLevel);
+          return;
+        }
+      } catch (e) {
+        console.error('Error restoring session:', e);
+      }
+    }
+
+    // Create new session
+    const newSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    setSessionId(newSessionId);
+  }, [chatbotId]);
+
+  // Save session to storage on changes
+  useEffect(() => {
+    if (!sessionId) return;
+
+    const storageKey = `${SESSION_STORAGE_KEY}${chatbotId}`;
+    const session: StoredSession = {
+      sessionId,
+      messages,
+      conversationMode,
+      intentLevel,
+      createdAt: Date.now(),
+    };
+
+    localStorage.setItem(storageKey, JSON.stringify(session));
+  }, [chatbotId, sessionId, messages, conversationMode, intentLevel]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -45,12 +134,36 @@ const EmbeddableWidget: React.FC<EmbeddableWidgetProps> = ({
     }
   }, [isOpen, messages.length]);
 
-  const handleSendMessage = async () => {
-    if (!inputValue.trim() || isLoading) return;
+  const handleServerAction = useCallback((action: ClientAction) => {
+    switch (action.type) {
+      case 'SHOW_EMAIL_INPUT':
+        setShowEmailInput(true);
+        setShowBookingButton(false);
+        break;
+      case 'SHOW_BOOKING_LINK':
+        setShowBookingButton(true);
+        setShowEmailInput(false);
+        if (action.url) setBookingUrl(action.url);
+        if (action.cta_text) setBookingCtaText(action.cta_text);
+        break;
+      case 'CONVERSATION_CLOSED':
+        setIsConversationClosed(true);
+        setShowEmailInput(false);
+        setShowBookingButton(false);
+        break;
+      case 'NONE':
+      default:
+        // No special action
+        break;
+    }
+  }, []);
+
+  const sendMessage = async (messageText: string) => {
+    if (!messageText.trim() || isLoading) return;
 
     const userMessage: Message = {
       id: `user_${Date.now()}`,
-      content: inputValue,
+      content: messageText,
       role: 'user',
       timestamp: new Date()
     };
@@ -66,8 +179,10 @@ const EmbeddableWidget: React.FC<EmbeddableWidgetProps> = ({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          message: inputValue,
-          sessionId
+          message: messageText,
+          session_id: sessionId,
+          page_url: window.location.href,
+          referrer_url: document.referrer,
         })
       });
 
@@ -75,13 +190,23 @@ const EmbeddableWidget: React.FC<EmbeddableWidgetProps> = ({
         throw new Error('Failed to get response');
       }
 
-      const data = await response.json();
+      const data: EnhancedChatResponse = await response.json();
+
+      // Update state from response
+      if (data.conversation_mode) setConversationMode(data.conversation_mode);
+      if (data.intent_level) setIntentLevel(data.intent_level);
+      if (data.session_id) setSessionId(data.session_id);
+
+      // Handle actions
+      const action = data.actions?.[0] || { type: 'NONE' };
+      handleServerAction(action);
 
       const botMessage: Message = {
         id: `bot_${Date.now()}`,
         content: data.response || 'Sorry, I could not process your request.',
         role: 'assistant',
-        timestamp: new Date()
+        timestamp: new Date(),
+        action,
       };
 
       setMessages(prev => [...prev, botMessage]);
@@ -99,10 +224,66 @@ const EmbeddableWidget: React.FC<EmbeddableWidgetProps> = ({
     }
   };
 
+  const handleSendMessage = async () => {
+    await sendMessage(inputValue);
+  };
+
+  const handleEmailSubmit = async () => {
+    if (!emailValue.trim()) return;
+
+    // Validate email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(emailValue)) {
+      const errorMessage: Message = {
+        id: `error_${Date.now()}`,
+        content: 'Please enter a valid email address.',
+        role: 'assistant',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
+      return;
+    }
+
+    setShowEmailInput(false);
+    await sendMessage(emailValue);
+    setEmailValue('');
+  };
+
+  const handleBookingClick = async () => {
+    // Track booking click
+    try {
+      await fetch(`${apiUrl}/api/webhooks/${chatbotId}/booking-click`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId })
+      });
+    } catch (e) {
+      console.error('Error tracking booking click:', e);
+    }
+
+    // Open Calendly in new tab
+    window.open(bookingUrl, '_blank');
+
+    // Add confirmation message
+    const confirmMessage: Message = {
+      id: `booking_${Date.now()}`,
+      content: 'Great! A new tab has been opened for you to schedule your call. We look forward to speaking with you!',
+      role: 'assistant',
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, confirmMessage]);
+    setShowBookingButton(false);
+    setIsConversationClosed(true);
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSendMessage();
+      if (showEmailInput) {
+        handleEmailSubmit();
+      } else {
+        handleSendMessage();
+      }
     }
   };
 
@@ -219,7 +400,6 @@ const EmbeddableWidget: React.FC<EmbeddableWidgetProps> = ({
       fontWeight: 600,
       cursor: 'pointer',
       transition: 'opacity 0.2s',
-      opacity: (isLoading || !inputValue.trim()) ? 0.5 : 1
     },
     toggleButton: {
       width: '60px',
@@ -246,8 +426,44 @@ const EmbeddableWidget: React.FC<EmbeddableWidgetProps> = ({
       borderRadius: '50%',
       backgroundColor: '#9ca3af',
       animation: 'typing 1.4s infinite'
+    },
+    bookingButton: {
+      backgroundColor: '#10b981',
+      color: '#ffffff',
+      border: 'none',
+      borderRadius: '8px',
+      padding: '12px 24px',
+      fontSize: '14px',
+      fontWeight: 600,
+      cursor: 'pointer',
+      width: '100%',
+      marginTop: '8px',
+      transition: 'background-color 0.2s'
+    },
+    emailInputContainer: {
+      display: 'flex',
+      flexDirection: 'column' as const,
+      gap: '8px',
+      padding: '16px',
+      backgroundColor: '#f0f9ff',
+      borderTop: '1px solid #e5e7eb'
+    },
+    emailLabel: {
+      fontSize: '13px',
+      color: '#6b7280',
+      marginBottom: '4px'
+    },
+    closedMessage: {
+      padding: '16px',
+      backgroundColor: '#f0fdf4',
+      borderTop: '1px solid #e5e7eb',
+      textAlign: 'center' as const,
+      color: '#166534',
+      fontSize: '14px'
     }
   };
+
+  const isInputDisabled = isLoading || isConversationClosed;
 
   return (
     <div style={styles.container}>
@@ -294,30 +510,84 @@ const EmbeddableWidget: React.FC<EmbeddableWidgetProps> = ({
                 </div>
               </div>
             )}
+            {showBookingButton && (
+              <div style={{ padding: '8px 0' }}>
+                <button
+                  style={styles.bookingButton}
+                  onClick={handleBookingClick}
+                  onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#059669'}
+                  onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#10b981'}
+                >
+                  {bookingCtaText}
+                </button>
+              </div>
+            )}
             <div ref={messagesEndRef} />
           </div>
-          <div style={styles.inputContainer}>
-            <input
-              type="text"
-              style={styles.input}
-              placeholder="Type your message..."
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyPress={handleKeyPress}
-              disabled={isLoading}
-              onFocus={(e) => e.currentTarget.style.borderColor = primaryColor}
-              onBlur={(e) => e.currentTarget.style.borderColor = '#d1d5db'}
-            />
-            <button
-              style={styles.sendButton}
-              onClick={handleSendMessage}
-              disabled={isLoading || !inputValue.trim()}
-              onMouseOver={(e) => !isLoading && inputValue.trim() && (e.currentTarget.style.opacity = '0.9')}
-              onMouseOut={(e) => e.currentTarget.style.opacity = (isLoading || !inputValue.trim()) ? '0.5' : '1'}
-            >
-              Send
-            </button>
-          </div>
+
+          {/* Email input section */}
+          {showEmailInput && !isConversationClosed && (
+            <div style={styles.emailInputContainer}>
+              <span style={styles.emailLabel}>Enter your email to continue:</span>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input
+                  type="email"
+                  style={styles.input}
+                  placeholder="your@email.com"
+                  value={emailValue}
+                  onChange={(e) => setEmailValue(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  autoFocus
+                />
+                <button
+                  style={{
+                    ...styles.sendButton,
+                    opacity: !emailValue.trim() ? 0.5 : 1
+                  }}
+                  onClick={handleEmailSubmit}
+                  disabled={!emailValue.trim()}
+                >
+                  Submit
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Closed conversation message */}
+          {isConversationClosed && (
+            <div style={styles.closedMessage}>
+              Thanks for chatting! We'll be in touch soon.
+            </div>
+          )}
+
+          {/* Regular input */}
+          {!showEmailInput && !isConversationClosed && (
+            <div style={styles.inputContainer}>
+              <input
+                type="text"
+                style={styles.input}
+                placeholder="Type your message..."
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyPress={handleKeyPress}
+                disabled={isInputDisabled}
+                onFocus={(e) => e.currentTarget.style.borderColor = primaryColor}
+                onBlur={(e) => e.currentTarget.style.borderColor = '#d1d5db'}
+              />
+              <button
+                style={{
+                  ...styles.sendButton,
+                  opacity: (isLoading || !inputValue.trim()) ? 0.5 : 1
+                }}
+                onClick={handleSendMessage}
+                disabled={isLoading || !inputValue.trim()}
+                onMouseOver={(e) => !isLoading && inputValue.trim() && (e.currentTarget.style.opacity = '0.9')}
+                onMouseOut={(e) => e.currentTarget.style.opacity = (isLoading || !inputValue.trim()) ? '0.5' : '1'}
+              >
+                Send
+              </button>
+            </div>
+          )}
         </div>
       )}
       <button

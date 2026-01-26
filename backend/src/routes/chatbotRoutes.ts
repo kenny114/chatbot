@@ -12,6 +12,13 @@ import {
   getDataSourceChunks,
 } from '../controllers/chatbotController';
 import { customizationController } from '../controllers/customizationController';
+import {
+  getLeadsByChatbot,
+  getLeadAnalytics,
+  getLeadConfig,
+  updateLeadConfig,
+  exportLeads,
+} from '../controllers/leadController';
 import { authenticateToken } from '../middleware/auth';
 import { loadUserPlan, loadUsageStats, enforceChatbotLimit } from '../middleware/planEnforcement';
 import {
@@ -45,5 +52,12 @@ router.get('/:id/status', getChatbotStatus);
 router.get('/:id/customization', customizationController.getCustomization);
 router.put('/:id/customization', customizationController.updateCustomization);
 router.delete('/:id/customization', customizationController.resetCustomization);
+
+// Lead capture
+router.get('/:id/leads', getLeadsByChatbot);
+router.get('/:id/leads/analytics', getLeadAnalytics);
+router.get('/:id/leads/export', exportLeads);
+router.get('/:id/lead-config', getLeadConfig);
+router.put('/:id/lead-config', updateLeadConfig);
 
 export default router;

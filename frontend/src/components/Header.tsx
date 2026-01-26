@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Moon, Sun, LayoutDashboard, BarChart3, Settings, LogOut, User } from 'lucide-react';
+import { Moon, Sun, LayoutDashboard, BarChart3, Settings, LogOut, User, Users } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { Button } from './ui/button';
@@ -67,6 +67,18 @@ const Header: React.FC = () => {
             >
               <BarChart3 className="h-4 w-4" />
               Analytics
+            </Button>
+            <Button
+              variant={isActive('/leads') ? 'secondary' : 'ghost'}
+              size="sm"
+              onClick={() => navigate('/leads')}
+              className={cn(
+                'flex items-center gap-2',
+                isActive('/leads') && 'bg-muted'
+              )}
+            >
+              <Users className="h-4 w-4" />
+              Leads
             </Button>
           </nav>
         </div>

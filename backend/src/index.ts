@@ -9,6 +9,7 @@ import paymentRoutes from './routes/paymentRoutes';
 import analyticsRoutes from './routes/analyticsRoutes';
 import userRoutes from './routes/userRoutes';
 import usageRoutes from './routes/usageRoutes';
+import leadRoutes from './routes/leadRoutes';
 import { errorHandler } from './middleware/errorHandler';
 import { apiLimiter } from './middleware/rateLimiter';
 
@@ -63,6 +64,7 @@ app.use('/api/webhooks', webhookRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/usage', usageRoutes);
+app.use('/api/leads', leadRoutes);
 
 // Error handling middleware (must be last)
 app.use(errorHandler);
