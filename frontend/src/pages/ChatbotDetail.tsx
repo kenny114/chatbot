@@ -574,25 +574,33 @@ const ChatbotDetail: React.FC = () => {
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Enable Lead Capture */}
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
                 <div className="space-y-0.5">
-                  <Label htmlFor="lead-capture-enabled">Enable Lead Capture</Label>
+                  <Label htmlFor="lead-capture-enabled" className="text-base font-medium">
+                    Enable Lead Capture
+                  </Label>
                   <p className="text-sm text-muted-foreground">
                     Ask visitors for their email when they show interest
                   </p>
                 </div>
-                <Switch
-                  id="lead-capture-enabled"
-                  checked={leadConfig.lead_capture_enabled}
-                  onCheckedChange={(checked) =>
-                    setLeadConfig({ ...leadConfig, lead_capture_enabled: checked })
-                  }
-                />
+                <div className="flex items-center gap-3">
+                  <span className={`text-sm font-medium ${leadConfig.lead_capture_enabled ? 'text-green-600' : 'text-muted-foreground'}`}>
+                    {leadConfig.lead_capture_enabled ? 'ON' : 'OFF'}
+                  </span>
+                  <Switch
+                    id="lead-capture-enabled"
+                    checked={leadConfig.lead_capture_enabled}
+                    onCheckedChange={(checked) =>
+                      setLeadConfig({ ...leadConfig, lead_capture_enabled: checked })
+                    }
+                    className="data-[state=checked]:bg-green-600"
+                  />
+                </div>
               </div>
 
               {/* Notification Email */}
               <div className="space-y-2">
-                <Label htmlFor="notification-email" className="flex items-center gap-2">
+                <Label htmlFor="notification-email" className="flex items-center gap-2 text-base font-medium">
                   <Mail className="h-4 w-4" />
                   Notification Email
                 </Label>
@@ -604,50 +612,61 @@ const ChatbotDetail: React.FC = () => {
                   onChange={(e) =>
                     setLeadConfig({ ...leadConfig, notification_email: e.target.value })
                   }
+                  className="max-w-md"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-sm text-muted-foreground">
                   Get notified when new leads are captured
                 </p>
               </div>
 
               {/* Enable Booking */}
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
                 <div className="space-y-0.5">
-                  <Label htmlFor="booking-enabled">Enable Call Booking</Label>
+                  <Label htmlFor="booking-enabled" className="text-base font-medium">
+                    Enable Call Booking
+                  </Label>
                   <p className="text-sm text-muted-foreground">
                     Show a Calendly booking button after capturing lead
                   </p>
                 </div>
-                <Switch
-                  id="booking-enabled"
-                  checked={leadConfig.booking_enabled}
-                  onCheckedChange={(checked) =>
-                    setLeadConfig({ ...leadConfig, booking_enabled: checked })
-                  }
-                />
+                <div className="flex items-center gap-3">
+                  <span className={`text-sm font-medium ${leadConfig.booking_enabled ? 'text-green-600' : 'text-muted-foreground'}`}>
+                    {leadConfig.booking_enabled ? 'ON' : 'OFF'}
+                  </span>
+                  <Switch
+                    id="booking-enabled"
+                    checked={leadConfig.booking_enabled}
+                    onCheckedChange={(checked) =>
+                      setLeadConfig({ ...leadConfig, booking_enabled: checked })
+                    }
+                    className="data-[state=checked]:bg-green-600"
+                  />
+                </div>
               </div>
 
-              {/* Calendly Link */}
-              {leadConfig.booking_enabled && (
-                <div className="space-y-2">
-                  <Label htmlFor="booking-link" className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    Calendly Link
-                  </Label>
-                  <Input
-                    id="booking-link"
-                    type="url"
-                    placeholder="https://calendly.com/your-name"
-                    value={leadConfig.booking_link || ''}
-                    onChange={(e) =>
-                      setLeadConfig({ ...leadConfig, booking_link: e.target.value })
-                    }
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Your Calendly scheduling link for booking calls
-                  </p>
-                </div>
-              )}
+              {/* Calendly Link - Always visible */}
+              <div className="space-y-2">
+                <Label htmlFor="booking-link" className="flex items-center gap-2 text-base font-medium">
+                  <Calendar className="h-4 w-4" />
+                  Calendly Link
+                </Label>
+                <Input
+                  id="booking-link"
+                  type="url"
+                  placeholder="https://calendly.com/your-name"
+                  value={leadConfig.booking_link || ''}
+                  onChange={(e) =>
+                    setLeadConfig({ ...leadConfig, booking_link: e.target.value })
+                  }
+                  className="max-w-md"
+                  disabled={!leadConfig.booking_enabled}
+                />
+                <p className="text-sm text-muted-foreground">
+                  {leadConfig.booking_enabled
+                    ? 'Your Calendly scheduling link for booking calls'
+                    : 'Enable Call Booking above to use this feature'}
+                </p>
+              </div>
 
               {/* Save Button */}
               <Button
