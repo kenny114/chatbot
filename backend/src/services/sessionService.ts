@@ -142,6 +142,10 @@ export const sessionService = {
       lead_id: string;
       booking_status: BookingStatus;
       booking_link_clicked_at: string;
+      visitor_profile_id: string;
+      agent_state: any;
+      conversation_summary: string;
+      tool_calls_count: number;
     }>
   ): Promise<ConversationSession | null> {
     const fields: string[] = [];
@@ -153,7 +157,7 @@ export const sessionService = {
       if (value !== undefined) {
         fields.push(`${key} = $${paramCount}`);
         // Handle JSON fields
-        if (key === 'intent_signals' || key === 'qualification_answers') {
+        if (key === 'intent_signals' || key === 'qualification_answers' || key === 'agent_state') {
           values.push(JSON.stringify(value));
         } else {
           values.push(value);
@@ -301,6 +305,7 @@ export const sessionService = {
         COUNT(*) FILTER (WHERE conversation_mode = 'INFO_MODE') as info_mode,
         COUNT(*) FILTER (WHERE conversation_mode = 'INTENT_CHECK_MODE') as intent_check_mode,
         COUNT(*) FILTER (WHERE conversation_mode = 'LEAD_CAPTURE_MODE') as lead_capture_mode,
+        COUNT(*) FILTER (WHERE conversation_mode = 'QUALIFICATION_MODE') as qualification_mode,
         COUNT(*) FILTER (WHERE conversation_mode = 'BOOKING_MODE') as booking_mode,
         COUNT(*) FILTER (WHERE conversation_mode = 'CLOSURE_MODE') as closure_mode
       FROM conversation_sessions
@@ -318,6 +323,7 @@ export const sessionService = {
         INFO_MODE: parseInt(row.info_mode) || 0,
         INTENT_CHECK_MODE: parseInt(row.intent_check_mode) || 0,
         LEAD_CAPTURE_MODE: parseInt(row.lead_capture_mode) || 0,
+        QUALIFICATION_MODE: parseInt(row.qualification_mode) || 0,
         BOOKING_MODE: parseInt(row.booking_mode) || 0,
         CLOSURE_MODE: parseInt(row.closure_mode) || 0,
       },

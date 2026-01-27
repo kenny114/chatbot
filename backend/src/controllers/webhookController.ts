@@ -8,6 +8,12 @@ import { conversationStateMachineService } from '../services/conversationStateMa
 import { leadCaptureService } from '../services/leadCaptureService';
 import { notificationService } from '../services/notificationService';
 import { calendlyService } from '../services/calendlyService';
+import { AgentOrchestrator } from '../services/agentOrchestrator';
+import { visitorProfileService } from '../services/visitorProfileService';
+import { shadowModeService } from '../services/shadowModeService';
+import { abTestService } from '../services/abTestService';
+import { abTestMetricsService } from '../services/abTestMetricsService';
+import { shouldUseAgent, shouldUseShadowMode } from '../config/agent';
 import { asyncHandler } from '../middleware/errorHandler';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -133,19 +139,226 @@ export const handleChatQuery = asyncHandler(async (req: Request, res: Response) 
   // Get lead capture configuration
   const config = await getLeadCaptureConfig(chatbotId);
 
-  // Process message through state machine
-  const stateResult = await conversationStateMachineService.processMessage(
-    session,
-    message,
-    config,
-    chatbot.instructions
-  );
+  // Check execution mode: agent, shadow, or state machine
+  const useAgent = shouldUseAgent(chatbotId);
+  const useShadowMode = shouldUseShadowMode(chatbotId);
+
+  // Track metrics (for A/B testing)
+  let actualCohort: 'agent' | 'state_machine' | null = null;
+  let toolCallsCount = 0;
+  let hadError = false;
+  let usedFallback = false;
+
+  let stateResult;
+
+  if (useShadowMode) {
+    // SHADOW MODE: Run both systems in parallel, compare, return state machine result
+    console.log(`[WebhookController] Shadow mode active for chatbot: ${chatbotId}`);
+
+    const shadowStartTime = Date.now();
+
+    try {
+      // Execute BOTH in parallel
+      const [agentResult, stateMachineResult] = await Promise.allSettled([
+        // Agent execution
+        (async () => {
+          const agentStart = Date.now();
+          try {
+            const visitorProfile = await visitorProfileService.getOrCreateProfile(
+              chatbotId,
+              {
+                email: session.lead_id ? await getLeadEmail(session.lead_id) : undefined,
+                sessionId: session.session_id,
+                userAgent: req.get('user-agent'),
+                userIp: req.ip,
+              }
+            );
+
+            const orchestrator = new AgentOrchestrator(
+              chatbotId,
+              config,
+              chatbot.instructions,
+              session,
+              visitorProfile
+            );
+
+            const agentResponse = await orchestrator.executeConversationTurn(message);
+            return {
+              result: agentResponse,
+              executionTimeMs: Date.now() - agentStart,
+            };
+          } catch (error) {
+            console.error('[ShadowMode] Agent execution error:', error);
+            throw error;
+          }
+        })(),
+        // State machine execution
+        (async () => {
+          const smStart = Date.now();
+          const result = await conversationStateMachineService.processMessage(
+            session,
+            message,
+            config,
+            chatbot.instructions
+          );
+          return {
+            result,
+            executionTimeMs: Date.now() - smStart,
+          };
+        })(),
+      ]);
+
+      // State machine result (always use this in shadow mode)
+      if (stateMachineResult.status === 'fulfilled') {
+        stateResult = stateMachineResult.value.result;
+
+        // Log comparison if agent also succeeded
+        if (agentResult.status === 'fulfilled') {
+          shadowModeService.logComparison(
+            chatbotId,
+            session.session_id,
+            message,
+            stateMachineResult.value,
+            agentResult.value
+          ).catch(err => console.error('[ShadowMode] Logging error:', err));
+
+          console.log(
+            `[ShadowMode] Completed - Agent: ${agentResult.value.executionTimeMs}ms, ` +
+            `StateMachine: ${stateMachineResult.value.executionTimeMs}ms`
+          );
+        } else {
+          console.warn('[ShadowMode] Agent failed:', agentResult.reason);
+        }
+      } else {
+        console.error('[ShadowMode] State machine failed:', stateMachineResult.reason);
+        throw stateMachineResult.reason;
+      }
+
+    } catch (error) {
+      console.error('[ShadowMode] Critical error, falling back to state machine only:', error);
+      stateResult = await conversationStateMachineService.processMessage(
+        session,
+        message,
+        config,
+        chatbot.instructions
+      );
+    }
+
+  } else if (useAgent) {
+    // Check if A/B testing is enabled
+    const rolloutPercentage = parseInt(process.env.AGENT_ROLLOUT_PERCENTAGE || '0', 10);
+    const useABTesting = rolloutPercentage > 0 && rolloutPercentage < 100;
+
+    let useAgentForThisChatbot = true;
+    let cohortInfo = '';
+
+    if (useABTesting) {
+      // A/B TESTING MODE: Use cohort assignment
+      useAgentForThisChatbot = await abTestService.isInAgentCohort(chatbotId);
+      cohortInfo = useAgentForThisChatbot ? ' [A/B Cohort: agent]' : ' [A/B Cohort: state_machine]';
+      console.log(`[WebhookController] A/B testing active (${rolloutPercentage}% rollout)${cohortInfo} for chatbot: ${chatbotId}`);
+    } else {
+      // Regular agent mode (100% rollout or flag-based)
+      console.log(`[WebhookController] Using LangChain agent (full rollout) for chatbot: ${chatbotId}`);
+    }
+
+    if (useAgentForThisChatbot) {
+      // AGENT EXECUTION
+      actualCohort = 'agent';
+
+      try {
+        const visitorProfile = await visitorProfileService.getOrCreateProfile(
+          chatbotId,
+          {
+            email: session.lead_id ? await getLeadEmail(session.lead_id) : undefined,
+            sessionId: session.session_id,
+            userAgent: req.get('user-agent'),
+            userIp: req.ip,
+          }
+        );
+
+        const orchestrator = new AgentOrchestrator(
+          chatbotId,
+          config,
+          chatbot.instructions,
+          session,
+          visitorProfile
+        );
+
+        const agentResponse = await orchestrator.executeConversationTurn(message);
+        toolCallsCount = agentResponse.tool_calls_count || 0;
+
+        stateResult = {
+          response: agentResponse.response,
+          nextMode: agentResponse.conversation_mode,
+          actions: agentResponse.actions.map((action: any) => ({
+            type: action.type === 'SHOW_BOOKING_LINK' ? 'OFFER_BOOKING' : action.type,
+            ...action,
+          })),
+          should_capture_lead: false,
+          should_offer_booking: agentResponse.actions.some((a: any) => a.type === 'SHOW_BOOKING_LINK'),
+        };
+
+        console.log(`[WebhookController] Agent completed with ${agentResponse.tool_calls_count} tool calls${cohortInfo}`);
+
+      } catch (error) {
+        console.error(`[WebhookController] Agent execution failed${cohortInfo}, falling back to state machine:`, error);
+        hadError = true;
+        usedFallback = true;
+        actualCohort = 'state_machine'; // Fallback to state machine
+
+        stateResult = await conversationStateMachineService.processMessage(
+          session,
+          message,
+          config,
+          chatbot.instructions
+        );
+      }
+    } else {
+      // STATE MACHINE EXECUTION (A/B control cohort)
+      actualCohort = 'state_machine';
+
+      console.log(`[WebhookController] Using state machine${cohortInfo} for chatbot: ${chatbotId}`);
+      stateResult = await conversationStateMachineService.processMessage(
+        session,
+        message,
+        config,
+        chatbot.instructions
+      );
+    }
+
+  } else {
+    // STATE MACHINE MODE: Use existing state machine
+    stateResult = await conversationStateMachineService.processMessage(
+      session,
+      message,
+      config,
+      chatbot.instructions
+    );
+  }
+
+  // Extract qualification updates from actions
+  const qualificationActions = stateResult.actions.filter(a => a.type === 'SAVE_QUALIFICATION');
+  let newQualificationStep = session.qualification_step;
+  const newQualificationAnswers = { ...session.qualification_answers };
+
+  for (const action of qualificationActions) {
+    if (action.type === 'SAVE_QUALIFICATION') {
+      if (action.question_id === '__step__') {
+        newQualificationStep = parseInt(action.answer, 10);
+      } else {
+        newQualificationAnswers[action.question_id] = action.answer;
+      }
+    }
+  }
 
   // Update session with new state
   await sessionService.updateSession(session.id, {
     conversation_mode: stateResult.next_mode,
     intent_level: stateResult.actions.find(a => a.type === 'UPDATE_INTENT')?.level || session.intent_level,
     intent_signals: stateResult.actions.find(a => a.type === 'UPDATE_INTENT')?.signals || session.intent_signals,
+    qualification_step: newQualificationStep,
+    qualification_answers: newQualificationAnswers,
   });
 
   // Add messages to history
@@ -203,6 +416,39 @@ export const handleChatQuery = asyncHandler(async (req: Request, res: Response) 
   // Calculate response time
   const responseTimeMs = Date.now() - startTime;
 
+  // Track A/B test metrics (if in A/B mode)
+  if (actualCohort !== null && !useShadowMode) {
+    try {
+      const isFirstMessage = session.message_count === 0;
+      const leadCaptured = !!captureAction;
+      const bookingOffered = stateResult.should_offer_booking || false;
+
+      if (isFirstMessage) {
+        // Initialize metrics for new session
+        await abTestMetricsService.initializeSession(
+          chatbotId,
+          session.session_id,
+          actualCohort,
+          responseTimeMs,
+          toolCallsCount
+        );
+      } else {
+        // Update metrics for existing session
+        await abTestMetricsService.updateSession(session.session_id, {
+          response_time_ms: responseTimeMs,
+          tool_calls: toolCallsCount,
+          had_error: hadError,
+          used_fallback: usedFallback,
+          lead_captured: leadCaptured,
+          booking_offered: bookingOffered,
+        });
+      }
+    } catch (metricsError) {
+      console.error('[ABTestMetrics] Error tracking metrics:', metricsError);
+      // Don't let metrics errors break the response
+    }
+  }
+
   // Generate conversation ID for analytics
   const conversationId = uuidv4();
 
@@ -218,6 +464,14 @@ export const handleChatQuery = asyncHandler(async (req: Request, res: Response) 
       type: 'SHOW_BOOKING_LINK',
       url: bookingLink.prefilled_url,
       cta_text: config.booking_cta_text,
+    };
+  } else if (stateResult.next_mode === 'QUALIFICATION_MODE' && config.qualification_questions && config.qualification_questions.length > 0) {
+    // Find the current question based on step
+    const questionIndex = newQualificationStep < config.qualification_questions.length ? newQualificationStep : 0;
+    const currentQuestion = config.qualification_questions[questionIndex];
+    clientAction = {
+      type: 'SHOW_QUALIFICATION',
+      question: currentQuestion,
     };
   } else if (stateResult.next_mode === 'LEAD_CAPTURE_MODE' && stateResult.should_capture_lead) {
     clientAction = {
@@ -251,7 +505,7 @@ export const handleChatQuery = asyncHandler(async (req: Request, res: Response) 
     sources: [],
     session_id: sessionId,
     conversation_id: conversationId,
-    conversation_mode: stateResult.next_mode,
+    conversation_mode: stateResult.next_mode || session.conversation_mode || 'INFO_MODE',
     intent_level: session.intent_level,
     actions: [clientAction],
   };
@@ -379,3 +633,16 @@ export const handleSessionEnd = asyncHandler(async (req: Request, res: Response)
 
   res.status(200).json({ success: true });
 });
+
+/**
+ * Helper function to get lead email from lead ID
+ */
+async function getLeadEmail(leadId: string): Promise<string | undefined> {
+  try {
+    const lead = await leadCaptureService.getLeadById(leadId);
+    return lead?.email;
+  } catch (error) {
+    console.error('[WebhookController] Error getting lead email:', error);
+    return undefined;
+  }
+}

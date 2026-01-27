@@ -7,6 +7,7 @@ export type ConversationMode =
   | 'INFO_MODE'
   | 'INTENT_CHECK_MODE'
   | 'LEAD_CAPTURE_MODE'
+  | 'QUALIFICATION_MODE'
   | 'BOOKING_MODE'
   | 'CLOSURE_MODE';
 
@@ -40,6 +41,11 @@ export interface ConversationSession {
   lead_id?: string;
   booking_status: BookingStatus;
   booking_link_clicked_at?: string;
+  // Agent-related fields
+  visitor_profile_id?: string;
+  agent_state?: any;
+  conversation_summary?: string;
+  tool_calls_count?: number;
   started_at: string;
   last_activity_at: string;
   closed_at?: string;
