@@ -116,7 +116,7 @@ const ChatbotDetail: React.FC = () => {
     const fetchLeadConfig = async () => {
       if (!id) return;
       try {
-        const apiUrl = import.meta.env.VITE_API_URL || '/api';
+        const apiUrl = import.meta.env.VITE_API_URL || 'https://eloquent-mercy-production.up.railway.app/api';
         const response = await fetch(`${apiUrl}/chatbots/${id}/lead-config`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -142,7 +142,7 @@ const ChatbotDetail: React.FC = () => {
     if (!id) return;
     setIsSavingLeadConfig(true);
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || '/api';
+      const apiUrl = import.meta.env.VITE_API_URL || 'https://eloquent-mercy-production.up.railway.app/api';
       const response = await fetch(`${apiUrl}/chatbots/${id}/lead-config`, {
         method: 'PUT',
         headers: {
@@ -200,7 +200,7 @@ const ChatbotDetail: React.FC = () => {
 
   const handleViewContent = async (sourceId: string) => {
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || '/api';
+      const apiUrl = import.meta.env.VITE_API_URL || 'https://eloquent-mercy-production.up.railway.app/api';
       const response = await fetch(
         `${apiUrl}/chatbots/${id}/sources/${sourceId}/chunks`,
         {
