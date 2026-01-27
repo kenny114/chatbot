@@ -51,9 +51,18 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Apply rate limiting to all routes
 app.use('/api', apiLimiter);
 
-// Health check
+// Health check endpoints
 app.get('/health', (_req, res) => {
   res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Root path for Railway health check
+app.get('/', (_req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    message: 'Chatbot API is running',
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Routes
