@@ -19,6 +19,10 @@ import {
   Palette,
   Lock,
   ArrowRight,
+  Users,
+  Calendar,
+  Mail,
+  Save,
 } from 'lucide-react';
 import { chatbotAPI } from '../services/api';
 import { Chatbot, DataSource } from '../types';
@@ -40,6 +44,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../components/ui/dialog';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { Switch } from '../components/ui/switch';
+
+interface LeadCaptureConfig {
+  lead_capture_enabled: boolean;
+  booking_enabled: boolean;
+  booking_link: string | null;
+  notification_email: string | null;
+}
 const ChatbotDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -53,6 +67,13 @@ const ChatbotDetail: React.FC = () => {
   const [sourceChunks, setSourceChunks] = useState<any[]>([]);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [leadConfig, setLeadConfig] = useState<LeadCaptureConfig>({
+    lead_capture_enabled: false,
+    booking_enabled: false,
+    booking_link: null,
+    notification_email: null,
+  });
+  const [isSavingLeadConfig, setIsSavingLeadConfig] = useState(false);
 
   const fetchData = async () => {
     if (!id) return;
@@ -89,6 +110,56 @@ const ChatbotDetail: React.FC = () => {
       return () => clearInterval(interval);
     }
   }, [dataSources, id]);
+
+  // Fetch lead capture config
+  useEffect(() => {
+    const fetchLeadConfig = async () => {
+      if (!id) return;
+      try {
+        const apiUrl = import.meta.env.VITE_API_URL || '/api';
+        const response = await fetch(`${apiUrl}/chatbots/${id}/lead-config`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        });
+        if (response.ok) {
+          const config = await response.json();
+          setLeadConfig({
+            lead_capture_enabled: config.lead_capture_enabled || false,
+            booking_enabled: config.booking_enabled || false,
+            booking_link: config.booking_link || '',
+            notification_email: config.notification_email || '',
+          });
+        }
+      } catch (error) {
+        console.error('Failed to fetch lead config:', error);
+      }
+    };
+    fetchLeadConfig();
+  }, [id]);
+
+  const handleSaveLeadConfig = async () => {
+    if (!id) return;
+    setIsSavingLeadConfig(true);
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || '/api';
+      const response = await fetch(`${apiUrl}/chatbots/${id}/lead-config`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify(leadConfig),
+      });
+      if (!response.ok) throw new Error('Failed to save');
+      alert('Lead capture settings saved!');
+    } catch (error) {
+      console.error('Failed to save lead config:', error);
+      alert('Failed to save lead capture settings');
+    } finally {
+      setIsSavingLeadConfig(false);
+    }
+  };
 
   const handleAddSourceSuccess = () => {
     setShowAddSourceModal(false);
@@ -489,6 +560,106 @@ const ChatbotDetail: React.FC = () => {
               Advanced settings and danger zone
             </p>
           </div>
+
+          {/* Lead Capture Settings */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Lead Capture
+              </CardTitle>
+              <CardDescription>
+                Capture leads and book calls from your chatbot conversations
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Enable Lead Capture */}
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="lead-capture-enabled">Enable Lead Capture</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Ask visitors for their email when they show interest
+                  </p>
+                </div>
+                <Switch
+                  id="lead-capture-enabled"
+                  checked={leadConfig.lead_capture_enabled}
+                  onCheckedChange={(checked) =>
+                    setLeadConfig({ ...leadConfig, lead_capture_enabled: checked })
+                  }
+                />
+              </div>
+
+              {/* Notification Email */}
+              <div className="space-y-2">
+                <Label htmlFor="notification-email" className="flex items-center gap-2">
+                  <Mail className="h-4 w-4" />
+                  Notification Email
+                </Label>
+                <Input
+                  id="notification-email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={leadConfig.notification_email || ''}
+                  onChange={(e) =>
+                    setLeadConfig({ ...leadConfig, notification_email: e.target.value })
+                  }
+                />
+                <p className="text-xs text-muted-foreground">
+                  Get notified when new leads are captured
+                </p>
+              </div>
+
+              {/* Enable Booking */}
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="booking-enabled">Enable Call Booking</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Show a Calendly booking button after capturing lead
+                  </p>
+                </div>
+                <Switch
+                  id="booking-enabled"
+                  checked={leadConfig.booking_enabled}
+                  onCheckedChange={(checked) =>
+                    setLeadConfig({ ...leadConfig, booking_enabled: checked })
+                  }
+                />
+              </div>
+
+              {/* Calendly Link */}
+              {leadConfig.booking_enabled && (
+                <div className="space-y-2">
+                  <Label htmlFor="booking-link" className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    Calendly Link
+                  </Label>
+                  <Input
+                    id="booking-link"
+                    type="url"
+                    placeholder="https://calendly.com/your-name"
+                    value={leadConfig.booking_link || ''}
+                    onChange={(e) =>
+                      setLeadConfig({ ...leadConfig, booking_link: e.target.value })
+                    }
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Your Calendly scheduling link for booking calls
+                  </p>
+                </div>
+              )}
+
+              {/* Save Button */}
+              <Button
+                onClick={handleSaveLeadConfig}
+                disabled={isSavingLeadConfig}
+                className="w-full sm:w-auto"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                {isSavingLeadConfig ? 'Saving...' : 'Save Lead Capture Settings'}
+              </Button>
+            </CardContent>
+          </Card>
 
           <Card className="border-error-200 dark:border-error-800">
             <CardHeader>
