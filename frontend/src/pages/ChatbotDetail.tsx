@@ -151,11 +151,14 @@ const ChatbotDetail: React.FC = () => {
         },
         body: JSON.stringify(leadConfig),
       });
-      if (!response.ok) throw new Error('Failed to save');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Server error: ${response.status}`);
+      }
       alert('Lead capture settings saved!');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to save lead config:', error);
-      alert('Failed to save lead capture settings');
+      alert(`Failed to save: ${error.message}`);
     } finally {
       setIsSavingLeadConfig(false);
     }
