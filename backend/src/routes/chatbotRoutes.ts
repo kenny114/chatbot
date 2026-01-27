@@ -29,7 +29,7 @@ import {
 
 const router = Router();
 
-// All routes require authentication
+// All routes require authentication - applied globally to this router
 router.use(authenticateToken);
 
 // Chatbot CRUD
