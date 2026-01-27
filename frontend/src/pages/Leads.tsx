@@ -96,7 +96,8 @@ const Leads: React.FC = () => {
         });
 
         if (!leadsResponse.ok) {
-          throw new Error('Failed to fetch leads');
+          const errorData = await leadsResponse.json().catch(() => ({}));
+          throw new Error(errorData.error || `Failed to fetch leads (${leadsResponse.status})`);
         }
 
         const leadsData = await leadsResponse.json();
