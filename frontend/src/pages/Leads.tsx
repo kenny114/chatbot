@@ -37,7 +37,7 @@ interface LeadAnalytics {
   average_messages_before_capture: number;
 }
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://eloquent-mercy-production.up.railway.app';
+const API_URL = import.meta.env.VITE_API_URL || 'https://eloquent-mercy-production.up.railway.app/api';
 
 const Leads: React.FC = () => {
   const { subscription } = useAuth();
@@ -85,8 +85,8 @@ const Leads: React.FC = () => {
 
         // Fetch leads
         const leadsUrl = chatbotId
-          ? `${API_URL}/api/chatbots/${chatbotId}/leads?limit=${pageSize}&offset=${page * pageSize}`
-          : `${API_URL}/api/leads?limit=${pageSize}&offset=${page * pageSize}`;
+          ? `${API_URL}/chatbots/${chatbotId}/leads?limit=${pageSize}&offset=${page * pageSize}`
+          : `${API_URL}/leads?limit=${pageSize}&offset=${page * pageSize}`;
 
         const leadsResponse = await fetch(leadsUrl, {
           headers: {
@@ -106,7 +106,7 @@ const Leads: React.FC = () => {
 
         // Fetch analytics if specific chatbot selected
         if (chatbotId) {
-          const analyticsResponse = await fetch(`${API_URL}/api/chatbots/${chatbotId}/leads/analytics`, {
+          const analyticsResponse = await fetch(`${API_URL}/chatbots/${chatbotId}/leads/analytics`, {
             headers: {
               Authorization: `Bearer ${token}`,
               'Content-Type': 'application/json',
@@ -138,7 +138,7 @@ const Leads: React.FC = () => {
     }
 
     try {
-      const response = await fetch(`${API_URL}/api/chatbots/${selectedChatbot}/leads/export`, {
+      const response = await fetch(`${API_URL}/chatbots/${selectedChatbot}/leads/export`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -169,7 +169,7 @@ const Leads: React.FC = () => {
     }
 
     try {
-      const response = await fetch(`${API_URL}/api/leads/${leadId}`, {
+      const response = await fetch(`${API_URL}/leads/${leadId}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`,
