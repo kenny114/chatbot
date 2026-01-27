@@ -7,6 +7,7 @@ import {
   StateAction,
   ClientAction,
   SessionMessage,
+  QualificationQuestion,
 } from '../types/leadCapture';
 import { ragService } from './ragService';
 import { intentDetectionService } from './intentDetectionService';
@@ -21,6 +22,7 @@ const STATE_PROMPTS = {
   LEAD_CAPTURE_EMAIL: "I'd be happy to help you further. To connect you with the right person, could you share your email address?",
   LEAD_CAPTURE_NAME: "Thanks! And what name should we use when reaching out to you?",
   LEAD_CAPTURE_REASON: "Perfect! One last thing - what are you primarily looking for help with?",
+  QUALIFICATION_TRANSITION: "Great! Just a couple quick questions to help us prepare for your conversation.",
   BOOKING_OFFER: "Would you like to schedule a quick call with our team to discuss this further?",
   CLOSURE_DEFAULT: "Thank you! Someone from our team will follow up shortly. Is there anything else I can help you with?",
 };
@@ -99,12 +101,47 @@ export const conversationStateMachineService = {
         if (captureResult.action) {
           actions.push(captureResult.action);
         }
+        if (captureResult.qualificationStep !== undefined) {
+          actions.push({
+            type: 'SAVE_QUALIFICATION',
+            question_id: '__step__',
+            answer: String(captureResult.qualificationStep),
+          });
+        }
+        break;
+
+      case 'QUALIFICATION_MODE':
+        const qualResult = await this.handleQualificationMode(
+          session,
+          message,
+          config
+        );
+        response = qualResult.response;
+        nextMode = qualResult.nextMode;
+        shouldOfferBooking = qualResult.shouldOfferBooking;
+        if (qualResult.qualificationStep !== undefined) {
+          actions.push({
+            type: 'SAVE_QUALIFICATION',
+            question_id: '__step__',
+            answer: String(qualResult.qualificationStep),
+          });
+        }
+        if (qualResult.qualificationAnswers) {
+          Object.entries(qualResult.qualificationAnswers).forEach(([qId, answer]) => {
+            actions.push({
+              type: 'SAVE_QUALIFICATION',
+              question_id: qId,
+              answer: answer as string,
+            });
+          });
+        }
         break;
 
       case 'BOOKING_MODE':
         const bookingResult = this.handleBookingMode(session, message, config);
         response = bookingResult.response;
         nextMode = bookingResult.nextMode;
+        shouldOfferBooking = bookingResult.shouldOfferBooking || false;
         break;
 
       case 'CLOSURE_MODE':
@@ -255,6 +292,8 @@ export const conversationStateMachineService = {
     nextMode: ConversationMode;
     shouldOfferBooking: boolean;
     action?: StateAction;
+    qualificationStep?: number;
+    clientAction?: ClientAction;
   }> {
     const currentStep = session.lead_capture_step || 'ASK_EMAIL';
 
@@ -320,7 +359,7 @@ export const conversationStateMachineService = {
   },
 
   /**
-   * Complete lead capture and move to booking or closure
+   * Complete lead capture and move to qualification, booking, or closure
    */
   completeLeadCapture(
     session: ConversationSession,
@@ -331,11 +370,29 @@ export const conversationStateMachineService = {
     nextMode: ConversationMode;
     shouldOfferBooking: boolean;
     action: StateAction;
+    qualificationStep?: number;
+    clientAction?: ClientAction;
   } {
     const action: StateAction = {
       type: 'CAPTURE_LEAD',
       data: { ...finalData },
     };
+
+    // Check if qualification is enabled and there are questions
+    if (config.qualification_enabled && config.qualification_questions && config.qualification_questions.length > 0) {
+      const firstQuestion = config.qualification_questions[0];
+      return {
+        response: `${STATE_PROMPTS.QUALIFICATION_TRANSITION}\n\n${firstQuestion.question}`,
+        nextMode: 'QUALIFICATION_MODE',
+        shouldOfferBooking: false,
+        action,
+        qualificationStep: 0,
+        clientAction: {
+          type: 'SHOW_QUALIFICATION',
+          question: firstQuestion,
+        },
+      };
+    }
 
     if (config.booking_enabled && config.booking_link) {
       return {
@@ -355,6 +412,86 @@ export const conversationStateMachineService = {
   },
 
   /**
+   * Handle QUALIFICATION_MODE - Collect qualification answers
+   */
+  async handleQualificationMode(
+    session: ConversationSession,
+    message: string,
+    config: LeadCaptureConfig
+  ): Promise<{
+    response: string;
+    nextMode: ConversationMode;
+    shouldOfferBooking: boolean;
+    qualificationStep?: number;
+    qualificationAnswers?: Record<string, string>;
+    clientAction?: ClientAction;
+  }> {
+    const questions = config.qualification_questions || [];
+    const currentStep = session.qualification_step || 0;
+
+    // If no questions configured, skip to next stage
+    if (questions.length === 0) {
+      return this.transitionAfterQualification(config);
+    }
+
+    // Save the answer for the current question (user just responded)
+    const currentQuestion = questions[currentStep];
+    const newAnswers: Record<string, string> = {
+      ...session.qualification_answers,
+      [currentQuestion.id]: message.trim(),
+    };
+
+    const nextStep = currentStep + 1;
+
+    // Check if there are more questions
+    if (nextStep < questions.length) {
+      const nextQuestion = questions[nextStep];
+      return {
+        response: nextQuestion.question,
+        nextMode: 'QUALIFICATION_MODE',
+        shouldOfferBooking: false,
+        qualificationStep: nextStep,
+        qualificationAnswers: newAnswers,
+        clientAction: {
+          type: 'SHOW_QUALIFICATION',
+          question: nextQuestion,
+        },
+      };
+    }
+
+    // All questions answered - move to booking or closure
+    const result = this.transitionAfterQualification(config);
+    return {
+      ...result,
+      qualificationStep: nextStep,
+      qualificationAnswers: newAnswers,
+    };
+  },
+
+  /**
+   * Transition to booking or closure after qualification
+   */
+  transitionAfterQualification(config: LeadCaptureConfig): {
+    response: string;
+    nextMode: ConversationMode;
+    shouldOfferBooking: boolean;
+  } {
+    if (config.booking_enabled && config.booking_link) {
+      return {
+        response: `Thank you for sharing that! ${STATE_PROMPTS.BOOKING_OFFER}`,
+        nextMode: 'BOOKING_MODE',
+        shouldOfferBooking: true,
+      };
+    }
+
+    return {
+      response: config.closure_message || STATE_PROMPTS.CLOSURE_DEFAULT,
+      nextMode: 'CLOSURE_MODE',
+      shouldOfferBooking: false,
+    };
+  },
+
+  /**
    * Handle BOOKING_MODE - Offer and track booking
    */
   handleBookingMode(
@@ -364,6 +501,7 @@ export const conversationStateMachineService = {
   ): {
     response: string;
     nextMode: ConversationMode;
+    shouldOfferBooking?: boolean;
   } {
     const normalizedMessage = message.toLowerCase();
 
@@ -373,8 +511,9 @@ export const conversationStateMachineService = {
 
     if (wantsToBook && !declines) {
       return {
-        response: `Great! You can schedule a call here: ${config.booking_link}\n\n${config.booking_cta_text}`,
+        response: `Great! A new tab has been opened for you to schedule your call. We look forward to speaking with you!`,
         nextMode: 'CLOSURE_MODE',
+        shouldOfferBooking: true,
       };
     } else if (declines) {
       return {
