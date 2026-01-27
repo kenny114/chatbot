@@ -1,4 +1,5 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
+import { AuthRequest } from '../middleware/auth';
 import { leadCaptureService } from '../services/leadCaptureService';
 import { chatbotService } from '../services/chatbotService';
 import { customizationService } from '../services/customizationService';
@@ -8,8 +9,8 @@ import pool from '../config/database';
 /**
  * Get all leads for the authenticated user
  */
-export const getLeads = asyncHandler(async (req: Request, res: Response) => {
-  const userId = req.user!.userId;
+export const getLeads = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const userId = req.userId!;
   const { chatbot_id, limit, offset, start_date, end_date, intent_level, booking_status } = req.query;
 
   const options: any = {
@@ -34,8 +35,8 @@ export const getLeads = asyncHandler(async (req: Request, res: Response) => {
 /**
  * Get leads for a specific chatbot
  */
-export const getLeadsByChatbot = asyncHandler(async (req: Request, res: Response) => {
-  const userId = req.user!.userId;
+export const getLeadsByChatbot = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const userId = req.userId!;
   const { id: chatbotId } = req.params;
   const { limit, offset, start_date, end_date, intent_level, booking_status } = req.query;
 
@@ -69,8 +70,8 @@ export const getLeadsByChatbot = asyncHandler(async (req: Request, res: Response
 /**
  * Get a single lead
  */
-export const getLead = asyncHandler(async (req: Request, res: Response) => {
-  const userId = req.user!.userId;
+export const getLead = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const userId = req.userId!;
   const { leadId } = req.params;
 
   const lead = await leadCaptureService.getLeadById(leadId);
@@ -93,8 +94,8 @@ export const getLead = asyncHandler(async (req: Request, res: Response) => {
 /**
  * Delete a lead
  */
-export const deleteLead = asyncHandler(async (req: Request, res: Response) => {
-  const userId = req.user!.userId;
+export const deleteLead = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const userId = req.userId!;
   const { leadId } = req.params;
 
   const lead = await leadCaptureService.getLeadById(leadId);
@@ -119,8 +120,8 @@ export const deleteLead = asyncHandler(async (req: Request, res: Response) => {
 /**
  * Get lead analytics for a chatbot
  */
-export const getLeadAnalytics = asyncHandler(async (req: Request, res: Response) => {
-  const userId = req.user!.userId;
+export const getLeadAnalytics = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const userId = req.userId!;
   const { id: chatbotId } = req.params;
 
   // Verify ownership
@@ -138,8 +139,8 @@ export const getLeadAnalytics = asyncHandler(async (req: Request, res: Response)
 /**
  * Get lead capture configuration for a chatbot
  */
-export const getLeadConfig = asyncHandler(async (req: Request, res: Response) => {
-  const userId = req.user!.userId;
+export const getLeadConfig = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const userId = req.userId!;
   const { id: chatbotId } = req.params;
 
   // Verify ownership
@@ -193,8 +194,8 @@ export const getLeadConfig = asyncHandler(async (req: Request, res: Response) =>
 /**
  * Update lead capture configuration for a chatbot
  */
-export const updateLeadConfig = asyncHandler(async (req: Request, res: Response) => {
-  const userId = req.user!.userId;
+export const updateLeadConfig = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const userId = req.userId!;
   const { id: chatbotId } = req.params;
   const config = req.body;
 
@@ -262,8 +263,8 @@ export const updateLeadConfig = asyncHandler(async (req: Request, res: Response)
 /**
  * Export leads as CSV
  */
-export const exportLeads = asyncHandler(async (req: Request, res: Response) => {
-  const userId = req.user!.userId;
+export const exportLeads = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const userId = req.userId!;
   const { id: chatbotId } = req.params;
 
   // Verify ownership
